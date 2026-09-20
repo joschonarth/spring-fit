@@ -9,7 +9,4 @@ import java.util.UUID;
 public interface IStudentRepository extends JpaRepository<StudentEntity, UUID> {
 
     Optional<StudentEntity> findByEmail(String email);
-
-//    @Query(value = "SELECT s FROM StudentEntity s JOIN FETCH s.physicalAssessment WHERE s.id = :studentId")
-//    Optional<StudentEntity> findByIdFetch(UUID studentId);
 }

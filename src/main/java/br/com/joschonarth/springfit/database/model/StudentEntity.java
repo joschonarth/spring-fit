@@ -44,6 +44,7 @@ public class StudentEntity implements UserDetails {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
     private List<PhysicalAssessmentEntity> physicalAssessments = new ArrayList<>();
 
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)

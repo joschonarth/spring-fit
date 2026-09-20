@@ -39,7 +39,7 @@ public class StudentService {
         studentRepository.findById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found"));
 
-        return physicalAssessmentRepository.findAllByStudentId(studentId).stream()
+        return physicalAssessmentRepository.findAllByStudentIdOrderByCreatedAtDesc(studentId).stream()
                 .map(this::toAssessmentResponseDTO)
                 .toList();
     }

@@ -52,7 +52,7 @@ public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAss
 
     Optional<PhysicalAssessmentEntity> findByIdAndStudentId(UUID assessmentId, UUID studentId);
 
-    List<PhysicalAssessmentEntity> findAllByStudentId(UUID studentId);
+    List<PhysicalAssessmentEntity> findAllByStudentIdOrderByCreatedAtDesc(UUID studentId);
 
     void deleteAllByStudentId(UUID studentId);
 }
