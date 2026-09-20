@@ -1,6 +1,6 @@
 package br.com.joschonarth.springfit.controller;
 
-import br.com.joschonarth.springfit.database.model.PhysicalAssessmentEntity;
+import br.com.joschonarth.springfit.dto.response.PhysicalAssessmentResponseDTO;
 import br.com.joschonarth.springfit.dto.response.StudentResponseDTO;
 import br.com.joschonarth.springfit.dto.request.UpdateStudentRequestDTO;
 import br.com.joschonarth.springfit.exception.NotFoundException;
@@ -26,7 +26,7 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    @Operation(summary = "Get student physical assessment", description = "Students can only view their own assessment. ADMIN can view all.")
+    @Operation(summary = "Get student physical assessment by ID", description = "Students can only view their own assessments. ADMIN can view all.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Assessment retrieved successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -34,11 +34,28 @@ public class StudentController {
             @ApiResponse(responseCode = "404", description = "Student or assessment not found")
     })
     @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
-    @GetMapping("{studentId}/assessment")
-    public PhysicalAssessmentEntity getPhysicalAssessment(
+    @GetMapping("{studentId}/assessment/{assessmentId}")
+    public PhysicalAssessmentResponseDTO getPhysicalAssessment(
+            @Parameter(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID studentId,
+            @Parameter(description = "Assessment ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID assessmentId) throws NotFoundException {
+        return studentService.getStudentAssessment(studentId, assessmentId);
+    }
+
+    @Operation(summary = "Get all physical assessments from a student", description = "Students can only view their own assessments. ADMIN can view all.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Assessments retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - cannot access another student's assessments"),
+            @ApiResponse(responseCode = "404", description = "Student not found")
+    })
+    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    @GetMapping("{studentId}/assessments")
+    public List<PhysicalAssessmentResponseDTO> getPhysicalAssessments(
             @Parameter(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID studentId) throws NotFoundException {
-        return studentService.getStudentAssessment(studentId);
+        return studentService.getStudentAssessments(studentId);
     }
 
     @Operation(summary = "Remove a student")

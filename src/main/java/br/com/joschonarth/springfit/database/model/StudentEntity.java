@@ -43,9 +43,9 @@ public class StudentEntity implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
-    @JoinColumn(name = "physical_assessment_id")
-    private PhysicalAssessmentEntity physicalAssessment;
+    @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    private List<PhysicalAssessmentEntity> physicalAssessments = new ArrayList<>();
 
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)
     private Set<WorkoutEntity> workouts = new HashSet<>();

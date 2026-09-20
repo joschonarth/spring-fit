@@ -2,7 +2,6 @@ package br.com.joschonarth.springfit.controller;
 
 import br.com.joschonarth.springfit.dto.request.PhysicalAssessmentRequestDTO;
 import br.com.joschonarth.springfit.dto.projection.PhysicalAssessmentProjection;
-import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import br.com.joschonarth.springfit.service.PhysicalAssessmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,14 +28,14 @@ public class PhysicalAssessmentController {
     @Operation(summary = "Create a new physical assessment", description = "Only ADMIN can create physical assessments")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Physical assessment created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid data or assessment already exists for this student"),
+            @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Forbidden - only ADMIN can create assessments"),
             @ApiResponse(responseCode = "404", description = "Student not found")
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void createPhysicalAssessment(@Valid @RequestBody PhysicalAssessmentRequestDTO physicalAssessmentRequestDTO) throws NotFoundException, BadRequestException {
+    public void createPhysicalAssessment(@Valid @RequestBody PhysicalAssessmentRequestDTO physicalAssessmentRequestDTO) throws NotFoundException {
         physicalAssessmentService.createPhysicalAssessment(physicalAssessmentRequestDTO);
     }
 

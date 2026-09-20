@@ -41,6 +41,10 @@ public class PhysicalAssessmentEntity {
     @Column(name = "bmi_classification")
     private BmiClassification bmiClassification;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id", nullable = false)
+    private StudentEntity student;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -68,7 +68,6 @@ erDiagram
         string password
         string phone
         date birth_date
-        int assessment_id FK
         datetime created_at
     }
     physical_assessment {
@@ -77,6 +76,8 @@ erDiagram
         float height
         float body_fat_percentage
         float bmi
+        string bmi_classification
+        uuid student_id FK
         datetime created_at
         datetime updated_at
     }
@@ -102,7 +103,7 @@ erDiagram
         int workout_id PK, FK
         int exercise_id PK, FK
     }
-    student ||--|| physical_assessment : "has"
+    student ||--o{ physical_assessment : "has history of"
     student ||--o{ workout : "has"
     workout ||--o{ workout_exercise : "contains"
     exercise ||--o{ workout_exercise : "used in"

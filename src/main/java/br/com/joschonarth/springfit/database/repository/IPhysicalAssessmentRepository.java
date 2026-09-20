@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAssessmentEntity, UUID> {
@@ -22,9 +23,9 @@ public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAss
                pa.bmi AS bmi,
                pa.bmiClassification AS bmiClassification,
                pa.createdAt AS createdAt,
-               pa.updatedAt AS updatedAtQ
+               pa.updatedAt AS updatedAt
         FROM PhysicalAssessmentEntity pa
-        JOIN StudentEntity s ON s.physicalAssessment = pa
+        JOIN pa.student s
         """)
     List<PhysicalAssessmentProjection> getAllAssessments();
 
@@ -40,12 +41,18 @@ public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAss
                pa.createdAt AS createdAt,
                pa.updatedAt AS updatedAt
         FROM PhysicalAssessmentEntity pa
-        JOIN StudentEntity s ON s.physicalAssessment = pa
+        JOIN pa.student s
         """,
     countQuery = """
         SELECT count(pa.id)
         FROM PhysicalAssessmentEntity pa
-        JOIN StudentEntity s ON s.physicalAssessment = pa
+        JOIN pa.student s
         """)
     Page<PhysicalAssessmentProjection> getAllAssessmentsPage(Pageable pageable);
+
+    Optional<PhysicalAssessmentEntity> findByIdAndStudentId(UUID assessmentId, UUID studentId);
+
+    List<PhysicalAssessmentEntity> findAllByStudentIdOrderByCreatedAtDesc(UUID studentId);
+
+    void deleteAllByStudentId(UUID studentId);
 }

@@ -6,6 +6,7 @@ import br.com.joschonarth.springfit.database.model.WorkoutEntity;
 import br.com.joschonarth.springfit.database.repository.IPhysicalAssessmentRepository;
 import br.com.joschonarth.springfit.database.repository.IStudentRepository;
 import br.com.joschonarth.springfit.database.repository.IWorkoutRepository;
+import br.com.joschonarth.springfit.dto.response.PhysicalAssessmentResponseDTO;
 import br.com.joschonarth.springfit.dto.response.StudentResponseDTO;
 import br.com.joschonarth.springfit.dto.request.UpdateStudentRequestDTO;
 import br.com.joschonarth.springfit.exception.NotFoundException;
@@ -24,22 +25,28 @@ public class StudentService {
     private final IWorkoutRepository workoutRepository;
     private final IStudentRepository studentRepository;
 
-    public PhysicalAssessmentEntity getStudentAssessment(UUID studentId) throws NotFoundException {
-         StudentEntity student = studentRepository.findByIdFetch(studentId)
+    public PhysicalAssessmentResponseDTO getStudentAssessment(UUID studentId, UUID assessmentId) throws NotFoundException {
+        studentRepository.findById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found"));
 
-         PhysicalAssessmentEntity assessment = student.getPhysicalAssessment();
+        PhysicalAssessmentEntity assessment = physicalAssessmentRepository.findByIdAndStudentId(assessmentId, studentId)
+                .orElseThrow(() -> new NotFoundException("Physical Assessment not found for this student"));
 
-         if (assessment == null) {
-             throw new NotFoundException("Physical Assessment not found for this student");
-         }
+        return toAssessmentResponseDTO(assessment);
+    }
 
-         return assessment;
+    public List<PhysicalAssessmentResponseDTO> getStudentAssessments(UUID studentId) throws NotFoundException {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
+
+        return physicalAssessmentRepository.findAllByStudentIdOrderByCreatedAtDesc(studentId).stream()
+                .map(this::toAssessmentResponseDTO)
+                .toList();
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void deleteStudent(UUID studentId)throws NotFoundException {
-        StudentEntity student = studentRepository.findByIdFetch(studentId)
+        StudentEntity student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found"));
 
         List<UUID> workoutIds = student.getWorkouts().stream()
@@ -48,9 +55,9 @@ public class StudentService {
 
         workoutRepository.deleteAllById(workoutIds);
 
-        studentRepository.deleteById(studentId);
+        physicalAssessmentRepository.deleteAllByStudentId(studentId);
 
-        physicalAssessmentRepository.deleteById(student.getPhysicalAssessment().getId());
+        studentRepository.deleteById(studentId);
     }
 
     public List<StudentResponseDTO> getAllStudents() {
@@ -85,6 +92,20 @@ public class StudentService {
                 .birthDate(student.getBirthDate())
                 .phone(student.getPhone())
                 .createdAt(student.getCreatedAt())
+                .build();
+    }
+
+    private PhysicalAssessmentResponseDTO toAssessmentResponseDTO(PhysicalAssessmentEntity assessment) {
+        return PhysicalAssessmentResponseDTO.builder()
+                .id(assessment.getId())
+                .studentId(assessment.getStudent().getId())
+                .weight(assessment.getWeight())
+                .height(assessment.getHeight())
+                .bodyFatPercentage(assessment.getBodyFatPercentage())
+                .bmi(assessment.getBmi())
+                .bmiClassification(assessment.getBmiClassification())
+                .createdAt(assessment.getCreatedAt())
+                .updatedAt(assessment.getUpdatedAt())
                 .build();
     }
 }

@@ -7,7 +7,6 @@ import br.com.joschonarth.springfit.database.repository.IStudentRepository;
 import br.com.joschonarth.springfit.dto.request.PhysicalAssessmentRequestDTO;
 import br.com.joschonarth.springfit.dto.projection.PhysicalAssessmentProjection;
 import br.com.joschonarth.springfit.enums.BmiClassification;
-import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,13 +24,9 @@ public class PhysicalAssessmentService {
     private final IStudentRepository studentRepository;
     private final IPhysicalAssessmentRepository physicalAssessmentRepository;
 
-    public void createPhysicalAssessment(PhysicalAssessmentRequestDTO dto) throws NotFoundException, BadRequestException {
+    public void createPhysicalAssessment(PhysicalAssessmentRequestDTO dto) throws NotFoundException {
         StudentEntity student = studentRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new NotFoundException("Student not found"));
-
-        if (student.getPhysicalAssessment() != null) {
-            throw new BadRequestException("Physical assessment already registered for this student");
-        }
 
         BigDecimal bmi = dto.getWeight()
                 .divide(dto.getHeight().multiply(dto.getHeight()), 2, RoundingMode.HALF_UP);
@@ -42,10 +37,10 @@ public class PhysicalAssessmentService {
                 .bodyFatPercentage(dto.getBodyFatPercentage())
                 .bmi(bmi)
                 .bmiClassification(calculateBmiClassification(bmi))
+                .student(student)
                 .build();
 
-        student.setPhysicalAssessment(physicalAssessment);
-        studentRepository.save(student);
+        physicalAssessmentRepository.save(physicalAssessment);
     }
 
     public List<PhysicalAssessmentProjection> getAllAssessments() {
