@@ -3,14 +3,49 @@ package br.com.joschonarth.springfit.handler;
 import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.ErrorResponse;
 import br.com.joschonarth.springfit.exception.NotFoundException;
+import br.com.joschonarth.springfit.exception.ValidationErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.List;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ValidationErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        List<ValidationErrorResponse.FieldError> fieldErrors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> ValidationErrorResponse.FieldError.builder()
+                        .field(error.getField())
+                        .message(error.getDefaultMessage())
+                        .build())
+                .toList();
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .message("Validation failed")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .errors(fieldErrors)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        ErrorResponse response = ErrorResponse.builder()
+                .message("Malformed or missing request body")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
