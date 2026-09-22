@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,28 +34,33 @@ public class PhysicalAssessmentController {
             @ApiResponse(responseCode = "403", description = "Forbidden - only ADMIN can create assessments"),
             @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void createPhysicalAssessment(@Valid @RequestBody PhysicalAssessmentRequestDTO physicalAssessmentRequestDTO) throws NotFoundException {
         physicalAssessmentService.createPhysicalAssessment(physicalAssessmentRequestDTO);
     }
 
-    @Operation(summary = "List all physical assessments")
+    @Operation(summary = "List all physical assessments", description = "Only ADMIN can list all assessments")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Assessments retrieved successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - only ADMIN can list all assessments")
     })
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<PhysicalAssessmentProjection> getAllAssessments() {
         return physicalAssessmentService.getAllAssessments();
     }
 
-    @Operation(summary = "List all physical assessments with pagination")
+    @Operation(summary = "List all physical assessments with pagination", description = "Only ADMIN can list all assessments")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Assessments retrieved successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - only ADMIN can list all assessments")
     })
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("page/{page}/size/{size}")
     @ResponseStatus(HttpStatus.OK)
     public Page<PhysicalAssessmentProjection> getAllAssessmentsPageable(
