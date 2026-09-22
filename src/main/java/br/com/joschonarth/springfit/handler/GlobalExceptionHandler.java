@@ -4,6 +4,8 @@ import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.ErrorResponse;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import br.com.joschonarth.springfit.exception.ValidationErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
@@ -89,8 +93,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        log.error("Unhandled exception", ex);
+
         ErrorResponse response = ErrorResponse.builder()
-                .message(ex.getMessage())
+                .message("Internal server error")
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .build();
 
