@@ -51,7 +51,11 @@ public class StudentEntity implements UserDetails {
     private Set<WorkoutEntity> workouts = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "student_roles", joinColumns = @JoinColumn(name = "role_id"))
+    @JoinTable(
+            name = "student_roles",
+            joinColumns = @JoinColumn(name = "student_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<RolesEntity> roles = new HashSet<>();
 
     @Override

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +36,7 @@ public class WorkoutController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Student or exercise not found")
     })
+    @PreAuthorize("#workoutRequestDTO.studentId == authentication.principal.id or hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void createWorkout(@Valid @RequestBody WorkoutRequestDTO workoutRequestDTO) throws NotFoundException, BadRequestException {
@@ -47,6 +49,7 @@ public class WorkoutController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Workout not found")
     })
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("{workoutId}")
     @ResponseStatus(HttpStatus.OK)
     public WorkoutResponseDTO getWorkoutById(
@@ -60,6 +63,7 @@ public class WorkoutController {
             @ApiResponse(responseCode = "200", description = "Workouts retrieved successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<WorkoutResponseDTO> getAllWorkouts() {

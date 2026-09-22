@@ -62,8 +62,10 @@ public class StudentController {
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Student removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - cannot remove another student's account"),
             @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
     @DeleteMapping("{studentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeStudent(
