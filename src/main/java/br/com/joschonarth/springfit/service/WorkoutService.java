@@ -27,6 +27,23 @@ public class WorkoutService {
     private final IWorkoutRepository workoutRepository;
 
     public void createWorkout(WorkoutRequestDTO workoutRequestDTO) throws NotFoundException, BadRequestException {
+        StudentEntity authenticatedStudent = Objects.requireNonNull(
+                (StudentEntity) Objects.requireNonNull(
+                        SecurityContextHolder.getContext().getAuthentication(),
+                        "Authentication must not be null"
+                ).getPrincipal(),
+                "Authenticated student must not be null"
+        );
+
+        boolean isAdmin = authenticatedStudent.getAuthorities().stream()
+                .anyMatch(role -> Objects.equals(role.getAuthority(), "ROLE_ADMIN"));
+
+        UUID targetStudentId = workoutRequestDTO.getStudentId();
+
+        if (!isAdmin && !authenticatedStudent.getId().equals(targetStudentId)) {
+            throw new BadRequestException("Students can only create workouts for themselves");
+        }
+
         Set<ExerciseEntity> exercises = new HashSet<>();
 
         StudentEntity student = studentRepository.findById(workoutRequestDTO.getStudentId())
