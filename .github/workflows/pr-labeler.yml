@@ -24,7 +24,7 @@ jobs:
             const match = title.match(/^(\w+)(\(.+\))?!?:/);
 
             const typeToLabel = {
-              feat: "feature",
+              feat: "enhancement",
               fix: "bug",
               docs: "documentation",
               refactor: "refactor",
@@ -34,7 +34,6 @@ jobs:
               ci: "ci",
               chore: "chore",
               revert: "revert",
-              style: "style",
               deps: "dependencies",
             };
 
