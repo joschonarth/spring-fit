@@ -10,3 +10,22 @@ services:
       MYSQL_PASSWORD: docker
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq_springfit
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: docker
+      RABBITMQ_DEFAULT_PASS: docker
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  mysql_data:
+  rabbitmq_data:
