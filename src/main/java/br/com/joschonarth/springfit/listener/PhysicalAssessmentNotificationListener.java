@@ -18,7 +18,9 @@ public class PhysicalAssessmentNotificationListener {
 
     private final INotificationRepository notificationRepository;
 
-    @RabbitListener(queues = RabbitMQConfiguration.ASSESSMENT_CREATED_QUEUE)
+    @RabbitListener(
+            queues = RabbitMQConfiguration.ASSESSMENT_CREATED_QUEUE,
+            containerFactory = "rabbitListenerContainerFactory")
     public void handle(PhysicalAssessmentCreatedEvent event) {
         String message = String.format(
                 "Your new physical assessment has been recorded. BMI: %s (%s)",
