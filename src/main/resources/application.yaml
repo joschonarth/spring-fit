@@ -40,4 +40,5 @@ springdoc:
 
 jwt:
   expiration: ${JWT_EXPIRATION:900000} # 15 minutes
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days
   key: ${JWT_KEY:nPHO9M8T>4^JLvtSBD`dro%$<g1@"2zA|_jF:h[C\EeVRm5Ky#)'0u7(qc~{YU-+aN=/IbW*iZl3x&;ksQ}],X?6fGw.p!}
