@@ -70,6 +70,7 @@ public class AuthenticationService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .birthDate(dto.getBirthDate())
+                .phone(dto.getPhone())
                 .roles(Set.of(role))
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .build());
