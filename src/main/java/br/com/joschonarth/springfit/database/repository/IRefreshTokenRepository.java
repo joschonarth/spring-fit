@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,8 @@ public interface IRefreshTokenRepository extends JpaRepository<RefreshTokenEntit
     @Modifying
     @Query("UPDATE RefreshTokenEntity r SET r.revoked = true WHERE r.student.id = :studentId AND r.revoked = false")
     void revokeAllByStudentId(@Param("studentId") UUID studentId);
+
+    @Modifying
+    @Query("DELETE FROM RefreshTokenEntity r WHERE r.expiresAt < :now")
+    int deleteByExpiresAtBefore(@Param("now") Instant now);
 }
