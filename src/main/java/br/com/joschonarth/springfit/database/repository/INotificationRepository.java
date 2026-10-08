@@ -12,4 +12,6 @@ public interface INotificationRepository extends JpaRepository<NotificationEntit
     List<NotificationEntity> findAllByStudentIdOrderByCreatedAtDesc(UUID studentId);
 
     Optional<NotificationEntity> findByIdAndStudentId(UUID id, UUID studentId);
+
+    List<NotificationEntity> findAllByStudentIdAndReadFalse(UUID studentId);
 }

@@ -6,6 +6,7 @@ import br.com.joschonarth.springfit.dto.response.NotificationResponseDTO;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,5 +29,13 @@ public class NotificationService {
 
         notification.setRead(true);
         notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void markAllAsRead(UUID studentId) {
+        List<NotificationEntity> notifications = notificationRepository.findAllByStudentIdAndReadFalse(studentId);
+
+        notifications.forEach(n -> n.setRead(true));
+        notificationRepository.saveAll(notifications);
     }
 }
