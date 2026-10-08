@@ -234,7 +234,7 @@ erDiagram
 3. (Optional) Configure environment variables. Defaults are defined in `src/main/resources/application.yaml`:
 
    | Variable | Default | Description |
-          | --- | --- | --- |
+   | --- | --- | --- |
    | `DB_USERNAME` | `docker` | Database user |
    | `DB_PASSWORD` | `docker` | Database password |
    | `RABBITMQ_HOST` | `localhost` | RabbitMQ host |
