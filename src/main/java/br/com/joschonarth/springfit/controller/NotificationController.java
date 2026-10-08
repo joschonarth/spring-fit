@@ -37,4 +37,12 @@ public class NotificationController {
             @PathVariable UUID notificationId) throws NotFoundException {
         notificationService.markAsRead(studentId, notificationId);
     }
+
+    @Operation(summary = "Mark all notifications as read")
+    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    @PatchMapping("read-all")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markAllAsRead(@PathVariable UUID studentId) {
+        notificationService.markAllAsRead(studentId);
+    }
 }
