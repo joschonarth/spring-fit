@@ -1,9 +1,6 @@
 package br.com.joschonarth.springfit.handler;
 
-import br.com.joschonarth.springfit.exception.BadRequestException;
-import br.com.joschonarth.springfit.exception.ErrorResponse;
-import br.com.joschonarth.springfit.exception.NotFoundException;
-import br.com.joschonarth.springfit.exception.ValidationErrorResponse;
+import br.com.joschonarth.springfit.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -89,6 +86,16 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
+        ErrorResponse response = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(Exception.class)

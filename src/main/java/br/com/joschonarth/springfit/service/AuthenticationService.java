@@ -13,6 +13,7 @@ import br.com.joschonarth.springfit.dto.response.RefreshTokenRequestDTO;
 import br.com.joschonarth.springfit.dto.response.TokenResponseDTO;
 import br.com.joschonarth.springfit.enums.RoleTypeEnum;
 import br.com.joschonarth.springfit.exception.BadRequestException;
+import br.com.joschonarth.springfit.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -84,24 +85,24 @@ public class AuthenticationService {
 
             return new TokenResponseDTO(token, refreshToken, expirationTime);
         } catch (BadCredentialsException e) {
-            throw new BadRequestException("Invalid credentials");
+            throw new UnauthorizedException("Invalid credentials");
         }
     }
 
     @Transactional
-    public TokenResponseDTO refresh(RefreshTokenRequestDTO dto) throws BadRequestException {
+    public TokenResponseDTO refresh(RefreshTokenRequestDTO dto) throws UnauthorizedException {
         RefreshTokenEntity stored = refreshTokenRepository.findByTokenHash(hash(dto.getRefreshToken()))
-                .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
 
         StudentEntity student = stored.getStudent();
 
         if (stored.isRevoked()) {
             refreshTokenRepository.revokeAllByStudentId(student.getId());
-            throw new BadRequestException("Invalid refresh token");
+            throw new UnauthorizedException("Invalid refresh token");
         }
 
         if (stored.getExpiresAt().isBefore(Instant.now())) {
-            throw new BadRequestException("Refresh token expired");
+            throw new UnauthorizedException("Refresh token expired");
         }
 
         stored.setRevoked(true);

@@ -35,7 +35,7 @@ public class AuthController {
     @Operation(summary = "Authenticate user and return JWT token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Login successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid credentials")
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
     @PostMapping("login")
     public TokenResponseDTO login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) throws Exception {
@@ -43,6 +43,10 @@ public class AuthController {
     }
 
     @Operation(summary = "Refresh access token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
+    })
     @PostMapping("refresh")
     public TokenResponseDTO refresh(@RequestBody @Valid RefreshTokenRequestDTO dto) throws Exception {
         return authenticationService.refresh(dto);
