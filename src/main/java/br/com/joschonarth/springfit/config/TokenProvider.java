@@ -25,6 +25,10 @@ public class TokenProvider {
         return buildToken(user.getUsername());
     }
 
+    public String generateToken(String username) {
+        return buildToken(username);
+    }
+
     private String buildToken(String username) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationTime);
