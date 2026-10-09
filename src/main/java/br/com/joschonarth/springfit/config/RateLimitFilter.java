@@ -1,6 +1,5 @@
 package br.com.joschonarth.springfit.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.joschonarth.springfit.exception.ErrorResponse;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -14,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -58,7 +58,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader("Retry-After", String.valueOf(waitSeconds));
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), ErrorResponse.builder()
+        jsonMapper.writeValue(response.getWriter(), ErrorResponse.builder()
                 .message("Too many requests. Try again in " + waitSeconds + " seconds.")
                 .status(HttpStatus.TOO_MANY_REQUESTS.value())
                 .build());

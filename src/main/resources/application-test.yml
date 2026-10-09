@@ -16,3 +16,11 @@ spring:
 jwt:
   expiration: 900000
   key: test-secret-key-only-used-in-automated-tests-do-not-use-in-production
+
+rate-limit:
+  auth:
+    capacity: 1000
+    refill-period-seconds: 60
+  api:
+    capacity: 1000
+    refill-period-seconds: 60
