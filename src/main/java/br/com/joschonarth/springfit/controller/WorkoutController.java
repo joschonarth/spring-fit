@@ -1,5 +1,6 @@
 package br.com.joschonarth.springfit.controller;
 
+import br.com.joschonarth.springfit.dto.request.UpdateWorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.request.WorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.response.WorkoutResponseDTO;
 import br.com.joschonarth.springfit.exception.BadRequestException;
@@ -68,5 +69,14 @@ public class WorkoutController {
     @ResponseStatus(HttpStatus.OK)
     public List<WorkoutResponseDTO> getAllWorkouts() {
         return workoutService.getAllWorkouts();
+    }
+
+    @Operation(summary = "Update a workout")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("{workoutId}")
+    public WorkoutResponseDTO updateWorkout(
+            @PathVariable UUID workoutId,
+            @Valid @RequestBody UpdateWorkoutRequestDTO dto) throws NotFoundException, BadRequestException {
+        return workoutService.updateWorkout(workoutId, dto);
     }
 }
