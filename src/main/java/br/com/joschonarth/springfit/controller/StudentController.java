@@ -3,8 +3,10 @@ package br.com.joschonarth.springfit.controller;
 import br.com.joschonarth.springfit.dto.response.PhysicalAssessmentResponseDTO;
 import br.com.joschonarth.springfit.dto.response.StudentResponseDTO;
 import br.com.joschonarth.springfit.dto.request.UpdateStudentRequestDTO;
+import br.com.joschonarth.springfit.dto.response.WorkoutResponseDTO;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import br.com.joschonarth.springfit.service.StudentService;
+import br.com.joschonarth.springfit.service.WorkoutService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,6 +27,7 @@ import java.util.UUID;
 public class StudentController {
 
     private final StudentService studentService;
+    private final WorkoutService workoutService;
 
     @Operation(summary = "Get student physical assessment by ID", description = "Students can only view their own assessments. ADMIN can view all.")
     @ApiResponses({
@@ -116,5 +119,22 @@ public class StudentController {
             @PathVariable UUID studentId,
             @RequestBody UpdateStudentRequestDTO dto) throws NotFoundException {
         return studentService.updateStudent(studentId, dto);
+    }
+
+    @Operation(summary = "List all workouts from a student",
+            description = "Students can only view their own workouts. ADMIN can view any student's workouts.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Workouts retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - cannot access another student's workouts"),
+            @ApiResponse(responseCode = "404", description = "Student not found")
+    })
+    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    @GetMapping("{studentId}/workouts")
+    @ResponseStatus(HttpStatus.OK)
+    public List<WorkoutResponseDTO> getStudentWorkouts(
+            @Parameter(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID studentId) throws NotFoundException {
+        return workoutService.getWorkoutsByStudentId(studentId);
     }
 }

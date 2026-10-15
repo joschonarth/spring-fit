@@ -6,17 +6,21 @@ import br.com.joschonarth.springfit.database.model.WorkoutEntity;
 import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
 import br.com.joschonarth.springfit.database.repository.IStudentRepository;
 import br.com.joschonarth.springfit.database.repository.IWorkoutRepository;
+import br.com.joschonarth.springfit.dto.request.UpdateWorkoutRequestDTO;
+import br.com.joschonarth.springfit.dto.request.WorkoutExercisesRequestDTO;
 import br.com.joschonarth.springfit.dto.response.ExerciseResponseDTO;
 import br.com.joschonarth.springfit.dto.request.WorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.response.WorkoutResponseDTO;
+import br.com.joschonarth.springfit.enums.RoleTypeEnum;
 import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -75,20 +79,7 @@ public class WorkoutService {
     }
 
     public WorkoutResponseDTO getWorkoutById(UUID workoutId) throws NotFoundException {
-        Authentication authentication = Objects.requireNonNull(
-                SecurityContextHolder.getContext().getAuthentication(),
-                "Authentication must not be null"
-        );
-
-        StudentEntity authenticatedStudent = Objects.requireNonNull(
-                (StudentEntity) authentication.getPrincipal(),
-                "Authenticated student must not be null"
-        );
-
-        WorkoutEntity workout = workoutRepository.findByIdAndStudentId(workoutId, authenticatedStudent.getId())
-                .orElseThrow(() -> new NotFoundException("Workout not found"));
-
-        return toResponseDTO(workout);
+        return toResponseDTO(getAccessibleWorkout(workoutId));
     }
 
     public List<WorkoutResponseDTO> getAllWorkouts() {
@@ -103,6 +94,102 @@ public class WorkoutService {
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkoutResponseDTO> getWorkoutsByStudentId(UUID studentId) throws NotFoundException {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
+
+        return workoutRepository.findAllByStudentId(studentId).stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    @Transactional
+    public WorkoutResponseDTO updateWorkout(UUID workoutId, UpdateWorkoutRequestDTO dto)
+            throws NotFoundException, BadRequestException {
+        WorkoutEntity workout = getAccessibleWorkout(workoutId);
+
+        if (dto.getName() != null && !dto.getName().equals(workout.getName())) {
+            boolean exists = workoutRepository
+                    .findByNameAndStudentId(dto.getName(), workout.getStudent().getId())
+                    .isPresent();
+            if (exists) {
+                throw new BadRequestException("Already exists a workout with this name for this student");
+            }
+            workout.setName(dto.getName());
+        }
+        if (dto.getObjective() != null) workout.setObjective(dto.getObjective());
+        if (dto.getDescription() != null) workout.setDescription(dto.getDescription());
+
+        return toResponseDTO(workoutRepository.save(workout));
+    }
+
+    @Transactional
+    public void deleteWorkout(UUID workoutId) throws NotFoundException {
+        workoutRepository.delete(getAccessibleWorkout(workoutId));
+    }
+
+    @Transactional
+    public WorkoutResponseDTO addExercises(UUID workoutId, WorkoutExercisesRequestDTO dto)
+            throws NotFoundException {
+        WorkoutEntity workout = getAccessibleWorkout(workoutId);
+
+        List<ExerciseEntity> found = exerciseRepository.findAllById(dto.getExerciseIds());
+        Set<UUID> foundIds = found.stream().map(ExerciseEntity::getId).collect(Collectors.toSet());
+
+        for (UUID id : dto.getExerciseIds()) {
+            if (!foundIds.contains(id)) {
+                throw new NotFoundException(String.format("Exercise %s not found", id));
+            }
+        }
+
+        workout.getExercises().addAll(found);
+        return toResponseDTO(workoutRepository.save(workout));
+    }
+
+    @Transactional
+    public WorkoutResponseDTO removeExercise(UUID workoutId, UUID exerciseId)
+            throws NotFoundException, BadRequestException {
+        WorkoutEntity workout = getAccessibleWorkout(workoutId);
+
+        boolean inWorkout = workout.getExercises().stream()
+                .anyMatch(e -> e.getId().equals(exerciseId));
+        if (!inWorkout) {
+            throw new NotFoundException("Exercise not found in this workout");
+        }
+
+        if (workout.getExercises().size() == 1) {
+            throw new BadRequestException("A workout must have at least one exercise");
+        }
+
+        workout.getExercises().removeIf(e -> e.getId().equals(exerciseId));
+        return toResponseDTO(workoutRepository.save(workout));
+    }
+
+    private StudentEntity getAuthenticatedStudent() {
+        return (StudentEntity) Objects.requireNonNull(
+                SecurityContextHolder.getContext().getAuthentication(),
+                "Authentication must not be null"
+        ).getPrincipal();
+    }
+
+    private boolean isAdmin(StudentEntity student) {
+        return student.getAuthorities().stream()
+                .anyMatch(r -> RoleTypeEnum.ROLE_ADMIN.name().equals(r.getAuthority()));
+    }
+
+    private WorkoutEntity getAccessibleWorkout(UUID workoutId) throws NotFoundException {
+        StudentEntity auth = getAuthenticatedStudent();
+
+        WorkoutEntity workout = workoutRepository.findById(workoutId)
+                .orElseThrow(() -> new NotFoundException("Workout not found"));
+
+        if (!isAdmin(auth) && !workout.getStudent().getId().equals(auth.getId())) {
+            throw new NotFoundException("Workout not found");
+        }
+        return workout;
     }
 
     private WorkoutResponseDTO toResponseDTO(WorkoutEntity workout) {
