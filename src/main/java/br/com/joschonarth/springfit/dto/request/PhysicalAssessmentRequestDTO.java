@@ -1,6 +1,7 @@
 package br.com.joschonarth.springfit.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -29,7 +30,8 @@ public class PhysicalAssessmentRequestDTO {
 
     @Schema(description = "Student height in meters", example = "1.85")
     @NotNull
-    @DecimalMin(value = "0.1", message = "Height must be greater than zero")
+    @DecimalMin(value = "0.5", message = "Height must be between 0.5 and 3.0 meters")
+    @DecimalMax(value = "3.0", message = "Height must be between 0.5 and 3.0 meters")
     private BigDecimal height;
 
     @Schema(description = "Body fat percentage", example = "18.5")

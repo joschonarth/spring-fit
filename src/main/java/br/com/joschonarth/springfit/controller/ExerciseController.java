@@ -93,7 +93,7 @@ public class ExerciseController {
     public ExerciseResponseDTO updateExercise(
             @Parameter(description = "Exercise ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID exerciseId,
-            @RequestBody UpdateExerciseRequestDTO dto) throws NotFoundException {
+            @Valid @RequestBody UpdateExerciseRequestDTO dto) throws NotFoundException {
         return exerciseService.updateExercise(exerciseId, dto);
     }
 
