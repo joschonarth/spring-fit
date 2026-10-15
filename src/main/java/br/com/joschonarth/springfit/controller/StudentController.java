@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -117,7 +118,7 @@ public class StudentController {
     public StudentResponseDTO updateStudent(
             @Parameter(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID studentId,
-            @RequestBody UpdateStudentRequestDTO dto) throws NotFoundException {
+            @Valid @RequestBody UpdateStudentRequestDTO dto) throws NotFoundException {
         return studentService.updateStudent(studentId, dto);
     }
 
