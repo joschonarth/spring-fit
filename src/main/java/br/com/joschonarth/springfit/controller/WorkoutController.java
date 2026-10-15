@@ -79,4 +79,12 @@ public class WorkoutController {
             @Valid @RequestBody UpdateWorkoutRequestDTO dto) throws NotFoundException, BadRequestException {
         return workoutService.updateWorkout(workoutId, dto);
     }
+
+    @Operation(summary = "Delete a workout")
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("{workoutId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteWorkout(@PathVariable UUID workoutId) throws NotFoundException {
+        workoutService.deleteWorkout(workoutId);
+    }
 }

@@ -114,6 +114,11 @@ public class WorkoutService {
         return toResponseDTO(workoutRepository.save(workout));
     }
 
+    @Transactional
+    public void deleteWorkout(UUID workoutId) throws NotFoundException {
+        workoutRepository.delete(getAccessibleWorkout(workoutId));
+    }
+
     private StudentEntity getAuthenticatedStudent() {
         return (StudentEntity) Objects.requireNonNull(
                 SecurityContextHolder.getContext().getAuthentication(),
