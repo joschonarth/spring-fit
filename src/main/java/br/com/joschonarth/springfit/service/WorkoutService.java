@@ -96,6 +96,16 @@ public class WorkoutService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<WorkoutResponseDTO> getWorkoutsByStudentId(UUID studentId) throws NotFoundException {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
+
+        return workoutRepository.findAllByStudentId(studentId).stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
     @Transactional
     public WorkoutResponseDTO updateWorkout(UUID workoutId, UpdateWorkoutRequestDTO dto)
             throws NotFoundException, BadRequestException {
