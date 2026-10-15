@@ -44,6 +44,7 @@ public class WorkoutEntity {
     @JoinColumn(name = "student_id")
     private StudentEntity student;
 
+    @Builder.Default
     @ManyToMany
     @JoinTable(
             name = "workout_exercise",

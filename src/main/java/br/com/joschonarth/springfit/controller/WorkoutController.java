@@ -1,6 +1,7 @@
 package br.com.joschonarth.springfit.controller;
 
 import br.com.joschonarth.springfit.dto.request.UpdateWorkoutRequestDTO;
+import br.com.joschonarth.springfit.dto.request.WorkoutExercisesRequestDTO;
 import br.com.joschonarth.springfit.dto.request.WorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.response.WorkoutResponseDTO;
 import br.com.joschonarth.springfit.exception.BadRequestException;
@@ -86,5 +87,23 @@ public class WorkoutController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteWorkout(@PathVariable UUID workoutId) throws NotFoundException {
         workoutService.deleteWorkout(workoutId);
+    }
+
+    @Operation(summary = "Add exercises to a workout")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("{workoutId}/exercises")
+    public WorkoutResponseDTO addExercises(
+            @PathVariable UUID workoutId,
+            @Valid @RequestBody WorkoutExercisesRequestDTO dto) throws NotFoundException {
+        return workoutService.addExercises(workoutId, dto);
+    }
+
+    @Operation(summary = "Remove an exercise from a workout")
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("{workoutId}/exercises/{exerciseId}")
+    public WorkoutResponseDTO removeExercise(
+            @PathVariable UUID workoutId,
+            @PathVariable UUID exerciseId) throws NotFoundException, BadRequestException {
+        return workoutService.removeExercise(workoutId, exerciseId);
     }
 }

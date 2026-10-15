@@ -7,6 +7,7 @@ import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
 import br.com.joschonarth.springfit.database.repository.IStudentRepository;
 import br.com.joschonarth.springfit.database.repository.IWorkoutRepository;
 import br.com.joschonarth.springfit.dto.request.UpdateWorkoutRequestDTO;
+import br.com.joschonarth.springfit.dto.request.WorkoutExercisesRequestDTO;
 import br.com.joschonarth.springfit.dto.response.ExerciseResponseDTO;
 import br.com.joschonarth.springfit.dto.request.WorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.response.WorkoutResponseDTO;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -117,6 +119,43 @@ public class WorkoutService {
     @Transactional
     public void deleteWorkout(UUID workoutId) throws NotFoundException {
         workoutRepository.delete(getAccessibleWorkout(workoutId));
+    }
+
+    @Transactional
+    public WorkoutResponseDTO addExercises(UUID workoutId, WorkoutExercisesRequestDTO dto)
+            throws NotFoundException {
+        WorkoutEntity workout = getAccessibleWorkout(workoutId);
+
+        List<ExerciseEntity> found = exerciseRepository.findAllById(dto.getExerciseIds());
+        Set<UUID> foundIds = found.stream().map(ExerciseEntity::getId).collect(Collectors.toSet());
+
+        for (UUID id : dto.getExerciseIds()) {
+            if (!foundIds.contains(id)) {
+                throw new NotFoundException(String.format("Exercise %s not found", id));
+            }
+        }
+
+        workout.getExercises().addAll(found);
+        return toResponseDTO(workoutRepository.save(workout));
+    }
+
+    @Transactional
+    public WorkoutResponseDTO removeExercise(UUID workoutId, UUID exerciseId)
+            throws NotFoundException, BadRequestException {
+        WorkoutEntity workout = getAccessibleWorkout(workoutId);
+
+        boolean inWorkout = workout.getExercises().stream()
+                .anyMatch(e -> e.getId().equals(exerciseId));
+        if (!inWorkout) {
+            throw new NotFoundException("Exercise not found in this workout");
+        }
+
+        if (workout.getExercises().size() == 1) {
+            throw new BadRequestException("A workout must have at least one exercise");
+        }
+
+        workout.getExercises().removeIf(e -> e.getId().equals(exerciseId));
+        return toResponseDTO(workoutRepository.save(workout));
     }
 
     private StudentEntity getAuthenticatedStudent() {
