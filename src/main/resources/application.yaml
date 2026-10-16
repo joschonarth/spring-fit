@@ -14,7 +14,7 @@ spring:
 #      path: /h2-console
 
   datasource:
-    url: jdbc:mysql://localhost:3306/springfit?createDatabaseIfNotExist=true
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:springfit}?createDatabaseIfNotExist=true
     username: ${DB_USERNAME:docker}
     password: ${DB_PASSWORD:docker}
     driver-class-name: com.mysql.cj.jdbc.Driver
