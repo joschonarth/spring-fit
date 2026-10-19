@@ -15,7 +15,7 @@
 ✨ [Features](#-features)&nbsp;&nbsp;•&nbsp;&nbsp;
 🚀 [Getting Started](#-getting-started)&nbsp;&nbsp;•&nbsp;&nbsp;
 🧪 [Tests](#-tests)&nbsp;&nbsp;•&nbsp;&nbsp;
-⚙️ [CI/CD](#-cicd)&nbsp;&nbsp;•&nbsp;&nbsp;
+⚙️ [CI/CD](#️-cicd)&nbsp;&nbsp;•&nbsp;&nbsp;
 📖 [API Documentation](#-api-documentation)
 
 </div>
@@ -27,9 +27,9 @@
 **SpringFit** is a REST API for gym management built with **Spring Boot** and **Spring Security**. It allows you to
 register students, create personalized workouts, manage exercises by muscle group, and record physical assessments.
 
-The API features **JWT** authentication with **refresh token rotation**, role-based access control, **event-driven
-notifications** powered by **RabbitMQ**, automated tests, a **GitHub Actions** CI pipeline, and interactive
-documentation powered by **Swagger**.
+The API features **JWT** authentication with **refresh token rotation**, role-based access control, **rate limiting**,
+**event-driven notifications** powered by **RabbitMQ**, a **Docker** setup for the whole stack, automated tests, a
+**GitHub Actions** CI pipeline, and interactive documentation powered by **Swagger**.
 
 ---
 
@@ -44,11 +44,14 @@ documentation powered by **Swagger**.
 - 🐬 **[MySQL 8](https://www.mysql.com/)** — Relational database used in production.
 - 🗄️ **[H2](https://www.h2database.com/)** — In-memory database for local development and automated tests.
 - 🔑 **[JJWT](https://github.com/jwtk/jjwt)** — JWT token generation and validation.
+- 🪣 **[Bucket4j](https://github.com/bucket4j/bucket4j) + [Caffeine](https://github.com/ben-manes/caffeine)** — Rate
+  limiting per client IP.
 - 📖 **[SpringDoc OpenAPI](https://springdoc.org/)** — Interactive API documentation via Swagger UI.
 - 🏗️ **[Lombok](https://projectlombok.org/)** — Boilerplate reduction through code generation.
 - ✅ **[Bean Validation](https://beanvalidation.org/)** — Input data validation.
 - 📦 **[Maven](https://maven.apache.org/)** — Dependency management and build automation (via Maven Wrapper).
-- 🐳 **[Docker Compose](https://www.docker.com/)** — MySQL and RabbitMQ containers for a reproducible environment.
+- 🐳 **[Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/)** — Multi-stage image for
+  the API, plus MySQL and RabbitMQ containers for a reproducible environment.
 - ⚙️ **[GitHub Actions](https://github.com/features/actions)** — Continuous integration, PR validation and automatic
   labeling.
 - 🤖 **[Dependabot](https://docs.github.com/en/code-security/dependabot)** — Automated dependency updates.
@@ -69,18 +72,21 @@ documentation powered by **Swagger**.
 - [x] **Reuse detection** — using an already revoked refresh token revokes all tokens of that user
 - [x] Refresh tokens stored as **SHA-256 hashes** (the raw token is never persisted)
 - [x] Logout endpoint (revokes the refresh token)
-- [x] Scheduled job that cleans up expired refresh tokens daily
-- [x] Passwords hashed with BCrypt
+- [x] Scheduled job that cleans up expired refresh tokens daily at 03:00
+- [x] Passwords hashed with BCrypt, with validation rules (minimum length, letter + digit, max 72 bytes)
 - [x] Role-based access control (`ADMIN` and `STUDENT`)
 - [x] Ownership checks with `@PreAuthorize` (students can only access their own data)
+- [x] **Rate limiting** per client IP: stricter limit on `/v1/auth/**`, general limit on the rest of the API
+- [x] Standard `429 Too Many Requests` responses with `Retry-After`, and `X-Rate-Limit-Remaining` on successful calls
 
 ### 🏋️ Gym Management
 
-- [x] Student registration, update and removal
-- [x] Personalized workout creation per student
-- [x] Exercise management by muscle group (with default difficulty level)
+- [x] Student registration, profile update, lookup and removal (cascades to workouts and assessments)
+- [x] Personalized workouts per student: create, update, delete, and list
+- [x] Add and remove exercises from a workout (a workout must keep at least one exercise)
+- [x] Exercise management by muscle group, with default difficulty level
 - [x] Protection against deleting exercises that belong to workouts
-- [x] Physical assessment registration with automatic **BMI** calculation and classification
+- [x] Physical assessment registration (admin only) with automatic **BMI** calculation and classification
 - [x] Assessment listing with projections and **pagination**
 - [x] Students can only view their own physical assessments
 
@@ -88,18 +94,26 @@ documentation powered by **Swagger**.
 
 - [x] `PhysicalAssessmentCreatedEvent` published to RabbitMQ when an assessment is created
 - [x] Listener that turns each event into a student notification
-- [x] Notification listing and "mark as read" endpoints
+- [x] Notification listing, "mark as read" and "mark all as read" endpoints
 - [x] Retry with exponential backoff and a **Dead Letter Queue** for failed messages
+
+### 🐳 Containerization
+
+- [x] Multi-stage **Dockerfile** (JDK build stage, JRE runtime stage) producing a small runtime image
+- [x] Application runs as a **non-root** user
+- [x] Container memory limited by the JVM with `MaxRAMPercentage=75`
+- [x] **Docker Compose** orchestrates the API, MySQL and RabbitMQ, with health checks and startup ordering
+- [x] `.dockerignore` keeps build artifacts and local IDE/secret files out of the image
 
 ### 🧰 Quality & Developer Experience
 
 - [x] Global exception handler with standardized error responses
 - [x] Detailed validation error responses (field + message)
 - [x] Data seeder with an admin, a student and sample exercises
-- [x] Unit tests for the service layer and application context test
+- [x] Unit tests for the service layer (exercises, workouts, notifications) and application context test
 - [x] CI pipeline with GitHub Actions
 - [x] Semantic PR titles and automatic PR labeling
-- [x] Interactive documentation with Swagger UI
+- [x] Interactive documentation with Swagger UI and Bearer authentication support
 
 ---
 
@@ -108,23 +122,28 @@ documentation powered by **Swagger**.
 ### 📁 Project Structure
 
 ```text
-src/main/java/br/com/joschonarth/springfit
-├── config/        # Security, JWT, OpenAPI, RabbitMQ and data seeder
-├── controller/    # REST controllers
-├── service/       # Business logic
-├── database/
-│   ├── model/     # JPA entities
-│   └── repository/# Spring Data repositories
-├── dto/
-│   ├── request/   # Request bodies
-│   ├── response/  # Response bodies
-│   ├── projection/# Interface-based projections
-│   └── event/     # Messaging events
-├── listener/      # RabbitMQ listeners
-├── job/           # Scheduled jobs
-├── enums/         # Domain enums
-├── exception/     # Custom exceptions and error responses
-└── handler/       # Global exception handler
+.
+├── Dockerfile          # Multi-stage image for the API
+├── docker-compose.yml  # API + MySQL + RabbitMQ
+├── .env.example        # Environment variables template
+└── src/main/java/br/com/joschonarth/springfit
+    ├── config/         # Security, JWT, rate limiting, OpenAPI, RabbitMQ and data seeder
+    ├── controller/     # REST controllers
+    ├── service/        # Business logic
+    ├── database/
+    │   ├── model/      # JPA entities
+    │   └── repository/ # Spring Data repositories
+    ├── dto/
+    │   ├── request/    # Request bodies
+    │   ├── response/   # Response bodies
+    │   ├── projection/ # Interface-based projections
+    │   └── event/      # Messaging events
+    ├── listener/       # RabbitMQ listeners
+    ├── job/            # Scheduled jobs
+    ├── enums/          # Domain enums
+    ├── exception/      # Custom exceptions and error responses
+    ├── handler/        # Global exception handler
+    └── validation/     # Custom validation annotations
 ```
 
 ---
@@ -211,11 +230,13 @@ erDiagram
 
 ## 🚀 Getting Started
 
+There are two ways to run SpringFit: the **full stack with Docker** (recommended) or **locally with Maven**.
+
 ### 📋 Prerequisites
 
-- ☕ [Java 17+](https://www.oracle.com/java/)
+- 🐳 [Docker](https://www.docker.com/) with Docker Compose (recommended path)
+- ☕ [Java 17+](https://www.oracle.com/java/) (local path only)
 - 📦 [Maven](https://maven.apache.org/) (optional — the Maven Wrapper is included)
-- 🐳 [Docker](https://www.docker.com/)
 
 ### 🔧 Installation
 
@@ -231,35 +252,86 @@ erDiagram
     cd spring-fit
     ```
 
-3. (Optional) Configure environment variables. Defaults are defined in `src/main/resources/application.yaml`:
+3. Create your environment file from the template and fill in the values:
+
+    ```bash
+    cp .env.example .env
+    ```
 
    | Variable | Default | Description |
-   | --- | --- | --- |
+      | --- | --- | --- |
+   | `APP_PORT` | `8080` | Host port the API is published on (Docker) |
+   | `JWT_KEY` | *(none in Compose)* | Secret used to sign JWTs. **Required** when running with Docker |
+   | `DB_ROOT_PASSWORD` | — | MySQL root password (Docker only) |
+   | `DB_NAME` | `springfit` | Database name |
    | `DB_USERNAME` | `docker` | Database user |
    | `DB_PASSWORD` | `docker` | Database password |
-   | `RABBITMQ_HOST` | `localhost` | RabbitMQ host |
-   | `RABBITMQ_PORT` | `5672` | RabbitMQ port |
    | `RABBITMQ_USERNAME` | `docker` | RabbitMQ user |
    | `RABBITMQ_PASSWORD` | `docker` | RabbitMQ password |
-   | `JWT_KEY` | *(development key)* | Secret used to sign JWTs |
-   | `JWT_EXPIRATION` | `900000` | Access token lifetime in ms (15 minutes) |
-   | `JWT_REFRESH_EXPIRATION` | `604800000` | Refresh token lifetime in ms (7 days) |
 
-   > ⚠️ **Always set your own `JWT_KEY` in production.** The default value is meant for local development only.
+   When running locally (without Docker), the application falls back to the defaults in `src/main/resources/application.yaml`, including `DB_HOST` (`localhost`), `RABBITMQ_HOST` (`localhost`), `RABBITMQ_PORT` (`5672`), `JWT_EXPIRATION` (`900000`, 15 minutes) and `JWT_REFRESH_EXPIRATION` (`604800000`, 7 days).
 
-### 🐳 Infrastructure (MySQL + RabbitMQ)
+   > ⚠️ **Always set your own `JWT_KEY` in production.** The default value in `application.yaml` is meant for local development only. The `.env` file is ignored by Git and by the Docker build context.
 
-Start both containers with Docker Compose:
+### 🐳 Option A — Full stack with Docker (recommended)
+
+Build the API image and start the API, MySQL and RabbitMQ together:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-| Service                | Port    | Credentials         |
-|------------------------|---------|---------------------|
-| MySQL                  | `3306`  | `docker` / `docker` |
-| RabbitMQ (AMQP)        | `5672`  | `docker` / `docker` |
-| RabbitMQ Management UI | `15672` | `docker` / `docker` |
+Compose waits for MySQL and RabbitMQ to pass their health checks before starting the API.
+
+| Service                | Port    | Notes                                         |
+|------------------------|---------|-----------------------------------------------|
+| API                    | `8080`  | Configurable with `APP_PORT`                  |
+| MySQL                  | `3306`  | Data persisted in the `mysql_data` volume     |
+| RabbitMQ (AMQP)        | `5672`  | Data persisted in the `rabbitmq_data` volume  |
+| RabbitMQ Management UI | `15672` | Uses `RABBITMQ_USERNAME` / `RABBITMQ_PASSWORD` |
+
+To view the API logs and stop the stack:
+
+```bash
+docker compose logs -f app
+docker compose down          # add -v to also remove the volumes
+```
+
+> 💡 Inside Compose the API connects to MySQL and RabbitMQ using the service names (`mysql` and `rabbitmq`), so no extra configuration is needed.
+
+#### 🏗️ About the Dockerfile
+
+The image is built in two stages to keep the final container small:
+
+1. **Build stage** (`eclipse-temurin:17-jdk`): downloads the Maven dependencies, then packages the application with `./mvnw clean package -DskipTests`.
+2. **Runtime stage** (`eclipse-temurin:17-jre`): contains only the JRE and the generated JAR. It runs as a dedicated, non-root `springfit` user and sets `JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"` so the JVM respects the container's memory limit.
+
+To build or run the image on its own (for example, against an external MySQL and RabbitMQ):
+
+```bash
+docker build -t springfit-api .
+docker run --rm -p 8080:8080 \
+  -e DB_HOST=host.docker.internal \
+  -e RABBITMQ_HOST=host.docker.internal \
+  -e JWT_KEY=your-own-secret-key \
+  springfit-api
+```
+
+### 💻 Option B — Local development with Maven
+
+1. Start only the infrastructure containers:
+
+    ```bash
+    docker compose up -d mysql rabbitmq
+    ```
+
+2. Start the application:
+
+    ```bash
+    ./mvnw spring-boot:run
+    ```
+
+The API will be available at **[http://localhost:8080](http://localhost:8080)**.
 
 ### 🗄️ Alternative Database (H2)
 
@@ -279,21 +351,10 @@ h2:
     path: /h2-console
 ```
 
-With H2 enabled, the console will be available at **[http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-**.
+With H2 enabled, the console will be available at **[http://localhost:8080/h2-console](http://localhost:8080/h2-console)**.
 
 > 💡 H2 replaces only the database. **RabbitMQ is still required** for the physical assessment notification flow, so you
 > can start just that service with `docker compose up -d rabbitmq`.
-
-### ▶️ Running
-
-Start the application with Maven:
-
-```bash
-./mvnw spring-boot:run
-```
-
-The API will be available at **[http://localhost:8080](http://localhost:8080)**.
 
 ### 🌱 Seeded Data
 
@@ -314,8 +375,8 @@ It also creates 5 sample exercises (Bench Press, Pull Up, Squat, Shoulder Press 
 
 The project includes automated tests built with **JUnit 5**, **Mockito** and **AssertJ**:
 
-- **Unit tests** for the service layer (e.g. `ExerciseServiceTest`), using mocked repositories and grouped with
-  `@Nested` classes.
+- **Unit tests** for the service layer (`ExerciseServiceTest`, `WorkoutServiceTest`, `NotificationServiceTest`), using
+  mocked repositories and grouped with `@Nested` classes.
 - **Application context test** (`SpringFitApplicationTests`) running with the `test` profile, which uses an in-memory H2
   database (`application-test.yml`).
 
@@ -368,6 +429,8 @@ With the application running, access the interactive documentation generated by 
 
 > 💡 To test protected endpoints, click **Authorize** and paste the JWT access token obtained at login (the `Bearer`
 > scheme is handled by Swagger UI).
+
+---
 
 ## ⭐ Support this Project
 
