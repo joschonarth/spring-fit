@@ -73,9 +73,9 @@ public class PhysicalAssessmentService {
     private BmiClassification calculateBmiClassification(BigDecimal bmi) {
         if (bmi.compareTo(new BigDecimal("18.5")) < 0) {
             return BmiClassification.UNDERWEIGHT;
-        } else if (bmi.compareTo(new BigDecimal("24.9")) <= 0) {
+        } else if (bmi.compareTo(new BigDecimal("25")) < 0) {
             return BmiClassification.NORMAL;
-        } else if (bmi.compareTo(new BigDecimal("29.9")) <= 0) {
+        } else if (bmi.compareTo(new BigDecimal("30")) < 0) {
             return BmiClassification.OVERWEIGHT;
         } else {
             return BmiClassification.OBESE;
