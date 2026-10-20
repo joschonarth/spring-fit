@@ -19,14 +19,18 @@ spring:
     password: ${DB_PASSWORD:docker}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
 
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
@@ -50,3 +54,7 @@ rate-limit:
   api:
     capacity: 100
     refill-period-seconds: 60
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
