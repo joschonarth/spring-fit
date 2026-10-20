@@ -14,7 +14,7 @@
 🛠️ [Technologies](#-technologies)&nbsp;&nbsp;•&nbsp;&nbsp;
 ✨ [Features](#-features)&nbsp;&nbsp;•&nbsp;&nbsp;
 🚀 [Getting Started](#-getting-started)&nbsp;&nbsp;•&nbsp;&nbsp;
-🧪 [Tests](#-tests)&nbsp;&nbsp;•&nbsp;&nbsp;
+🧪 [Tests & Coverage](#-tests)&nbsp;&nbsp;•&nbsp;&nbsp;
 ⚙️ [CI/CD](#️-cicd)&nbsp;&nbsp;•&nbsp;&nbsp;
 📖 [API Documentation](#-api-documentation)
 
@@ -28,8 +28,9 @@
 register students, create personalized workouts, manage exercises by muscle group, and record physical assessments.
 
 The API features **JWT** authentication with **refresh token rotation**, role-based access control, **rate limiting**,
-**event-driven notifications** powered by **RabbitMQ**, a **Docker** setup for the whole stack, automated tests, a
-**GitHub Actions** CI pipeline, and interactive documentation powered by **Swagger**.
+**event-driven notifications** powered by **RabbitMQ**, **versioned database migrations** with **Flyway**, **code
+coverage** reports with **JaCoCo**, a **Docker** setup for the whole stack, automated tests, a **GitHub Actions** CI
+pipeline, and interactive documentation powered by **Swagger**.
 
 ---
 
@@ -39,6 +40,7 @@ The API features **JWT** authentication with **refresh token rotation**, role-ba
 - 🌱 **[Spring Boot 4](https://spring.io/projects/spring-boot)** — Framework for building modern Java applications.
 - 🔐 **[Spring Security](https://spring.io/projects/spring-security)** — Authentication and access control.
 - 🗃️ **[Spring Data JPA](https://spring.io/projects/spring-data-jpa)** — Data access abstraction with Hibernate.
+- 🛫 **[Flyway](https://flywaydb.org/)** — Versioned, repeatable database migrations (`flyway-mysql`).
 - 🐇 **[RabbitMQ](https://www.rabbitmq.com/) + [Spring AMQP](https://spring.io/projects/spring-amqp)** — Asynchronous
   messaging and event-driven notifications.
 - 🐬 **[MySQL 8](https://www.mysql.com/)** — Relational database used in production.
@@ -50,6 +52,7 @@ The API features **JWT** authentication with **refresh token rotation**, role-ba
 - 🏗️ **[Lombok](https://projectlombok.org/)** — Boilerplate reduction through code generation.
 - ✅ **[Bean Validation](https://beanvalidation.org/)** — Input data validation.
 - 📦 **[Maven](https://maven.apache.org/)** — Dependency management and build automation (via Maven Wrapper).
+- 📊 **[JaCoCo](https://www.jacoco.org/jacoco/)** — Code coverage reports and minimum coverage enforcement.
 - 🐳 **[Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/)** — Multi-stage image for
   the API, plus MySQL and RabbitMQ containers for a reproducible environment.
 - ⚙️ **[GitHub Actions](https://github.com/features/actions)** — Continuous integration, PR validation and automatic
@@ -97,6 +100,12 @@ The API features **JWT** authentication with **refresh token rotation**, role-ba
 - [x] Notification listing, "mark as read" and "mark all as read" endpoints
 - [x] Retry with exponential backoff and a **Dead Letter Queue** for failed messages
 
+### 🗃️ Persistence & Migrations
+
+- [x] Database schema versioned with **Flyway** (`src/main/resources/db/migration`)
+- [x] Hibernate `ddl-auto: validate` — the application refuses to start if entities and schema diverge
+- [x] Existing databases are **baselined** at version 1, so they are not recreated
+
 ### 🐳 Containerization
 
 - [x] Multi-stage **Dockerfile** (JDK build stage, JRE runtime stage) producing a small runtime image
@@ -110,7 +119,8 @@ The API features **JWT** authentication with **refresh token rotation**, role-ba
 - [x] Global exception handler with standardized error responses
 - [x] Detailed validation error responses (field + message)
 - [x] Data seeder with an admin, a student and sample exercises
-- [x] Unit tests for the service layer (exercises, workouts, notifications) and application context test
+- [x] Unit tests for the service layer (exercises, workouts, notifications, physical assessments) and application context test
+- [x] **JaCoCo** coverage report, with a build gate requiring at least **30% line coverage**
 - [x] CI pipeline with GitHub Actions
 - [x] Semantic PR titles and automatic PR labeling
 - [x] Interactive documentation with Swagger UI and Bearer authentication support
@@ -144,6 +154,11 @@ The API features **JWT** authentication with **refresh token rotation**, role-ba
     ├── exception/      # Custom exceptions and error responses
     ├── handler/        # Global exception handler
     └── validation/     # Custom validation annotations
+
+src/main/resources
+├── application.yaml        # Main configuration (MySQL, Flyway, JWT, RabbitMQ, rate limit)
+├── application-test.yml    # Test profile (H2 in-memory, Flyway disabled)
+└── db/migration/           # Flyway SQL migrations (V1__baseline_schema.sql, ...)
 ```
 
 ---
@@ -226,6 +241,9 @@ erDiagram
     exercise ||--o{ workout_exercise : "used in"
 ```
 
+> 💡 The schema above is the result of the Flyway migrations. Any change to an entity must be accompanied by a new
+> migration file (for example `V2__add_column.sql`); never edit an already applied migration.
+
 ---
 
 ## 🚀 Getting Started
@@ -281,7 +299,8 @@ Build the API image and start the API, MySQL and RabbitMQ together:
 docker compose up -d --build
 ```
 
-Compose waits for MySQL and RabbitMQ to pass their health checks before starting the API.
+Compose waits for MySQL and RabbitMQ to pass their health checks before starting the API. Flyway then applies the
+pending migrations automatically on the first start.
 
 | Service                | Port    | Notes                                         |
 |------------------------|---------|-----------------------------------------------|
@@ -333,10 +352,24 @@ docker run --rm -p 8080:8080 \
 
 The API will be available at **[http://localhost:8080](http://localhost:8080)**.
 
+### 🛫 Database Migrations (Flyway)
+
+Schema changes are managed by **Flyway**. The migration scripts live in `src/main/resources/db/migration` and follow the
+`V<version>__<description>.sql` naming convention.
+
+- On startup, Flyway applies every migration that has not been applied yet, in version order.
+- Hibernate is set to `ddl-auto: validate`, so it never changes the schema itself; it only checks that the entities
+  match the database.
+- The current baseline is `V1__baseline_schema.sql`. Databases that already existed before Flyway was introduced are
+  marked at `baseline-version: 1`, so the baseline is treated as applied and only later migrations run.
+- To change the schema, create a new file with the next version (for example `V2__add_goal_to_workout.sql`). Never
+  modify a migration that has already been applied to any environment.
+
 ### 🗄️ Alternative Database (H2)
 
 If you prefer to use the in-memory **H2** database instead of MySQL, comment out the MySQL block and uncomment the H2
-block in `src/main/resources/application.yaml`:
+block in `src/main/resources/application.yaml`. Because the Flyway scripts are written for MySQL, Flyway must also be
+disabled and Hibernate must create the schema from the entities:
 
 ```yaml
 # H2 In-Memory Database
@@ -349,6 +382,13 @@ h2:
   console:
     enabled: true
     path: /h2-console
+
+flyway:
+  enabled: false
+
+jpa:
+  hibernate:
+    ddl-auto: create-drop
 ```
 
 With H2 enabled, the console will be available at **[http://localhost:8080/h2-console](http://localhost:8080/h2-console)**.
@@ -373,12 +413,16 @@ It also creates 5 sample exercises (Bench Press, Pull Up, Squat, Shoulder Press 
 
 ## 🧪 Tests
 
-The project includes automated tests built with **JUnit 5**, **Mockito** and **AssertJ**:
+The project includes automated tests built with **JUnit 5**, **Mockito**, **AssertJ** and **JaCoCo**:
 
-- **Unit tests** for the service layer (`ExerciseServiceTest`, `WorkoutServiceTest`, `NotificationServiceTest`), using
-  mocked repositories and grouped with `@Nested` classes.
+- **Unit tests** for the service layer, using mocked repositories and grouped with `@Nested` classes:
+    - `ExerciseServiceTest`
+    - `WorkoutServiceTest`
+    - `NotificationServiceTest`
+    - `PhysicalAssessmentServiceTest` — BMI calculation, classification at every threshold (parameterized), the RabbitMQ
+      event payload, and the no-publish-on-failure guarantees.
 - **Application context test** (`SpringFitApplicationTests`) running with the `test` profile, which uses an in-memory H2
-  database (`application-test.yml`).
+  database and disables Flyway (`application-test.yml`).
 
 Run all tests:
 
@@ -386,10 +430,27 @@ Run all tests:
 ./mvnw test
 ```
 
-Run the full verification (the same command used by the CI):
+Run the full verification (the same command used by the CI), which runs the tests and the JaCoCo coverage check:
 
 ```bash
 ./mvnw clean verify
+```
+
+### 📊 Code Coverage (JaCoCo)
+
+JaCoCo instruments the tests and produces a coverage report during the `verify` phase. The build is configured as
+follows:
+
+- **Report**: generated in `target/site/jacoco/` (open `index.html` in a browser).
+- **Gate**: the build fails if the bundle's **line coverage** drops below **30%**.
+- **Exclusions**: DTOs (`**/dto/**`), JPA entities (`**/database/model/**`), configuration classes (`**/config/**`) and
+  `SpringFitApplication` are excluded from the analysis, so the metric reflects the business logic.
+
+Generate only the report after running the tests:
+
+```bash
+./mvnw clean verify
+open target/site/jacoco/index.html     # macOS (use xdg-open on Linux or start on Windows)
 ```
 
 Test reports are generated in `target/surefire-reports/`.
@@ -400,11 +461,11 @@ Test reports are generated in `target/surefire-reports/`.
 
 The repository uses **GitHub Actions** (workflows in `.github/workflows`):
 
-| Workflow                            | Trigger                                            | Description                                                                                                                                |
-|-------------------------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| **Build** (`build.yml`)             | Push / PR to `main` and `develop`, manual dispatch | Sets up JDK 17 (Temurin) with Maven cache, runs `./mvnw clean verify` and uploads the Surefire test report as an artifact                  |
-| **PR Title Check** (`pr-title.yml`) | PR opened / edited / synchronized                  | Validates PR titles against [Conventional Commits](https://www.conventionalcommits.org/) (subject must not start with an uppercase letter) |
-| **PR Labeler** (`pr-labeler.yml`)   | PR opened / edited / synchronized                  | Automatically labels PRs based on the conventional commit type (`feat` → `enhancement`, `fix` → `bug`, `docs` → `documentation`, etc.)     |
+| Workflow                            | Trigger                                            | Description                                                                                                                                                       |
+|-------------------------------------|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Build** (`build.yml`)             | Push / PR to `main` and `develop`, manual dispatch | Sets up JDK 17 (Temurin) with Maven cache, runs `./mvnw clean verify` (tests + JaCoCo coverage check) and uploads the Surefire test report and JaCoCo report as artifacts |
+| **PR Title Check** (`pr-title.yml`) | PR opened / edited / synchronized                  | Validates PR titles against [Conventional Commits](https://www.conventionalcommits.org/) (subject must not start with an uppercase letter)                        |
+| **PR Labeler** (`pr-labeler.yml`)   | PR opened / edited / synchronized                  | Automatically labels PRs based on the conventional commit type (`feat` → `enhancement`, `fix` → `bug`, `docs` → `documentation`, etc.)                            |
 
 **Dependabot** is configured to check Maven and GitHub Actions dependencies weekly, opening PRs with `chore` and `ci`
 commit prefixes.
