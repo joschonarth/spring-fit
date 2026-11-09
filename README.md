@@ -40,10 +40,10 @@ pipeline, and interactive documentation powered by **Swagger**.
 - 🌱 **[Spring Boot 4](https://spring.io/projects/spring-boot)** — Framework for building modern Java applications.
 - 🔐 **[Spring Security](https://spring.io/projects/spring-security)** — Authentication and access control.
 - 🗃️ **[Spring Data JPA](https://spring.io/projects/spring-data-jpa)** — Data access abstraction with Hibernate.
-- 🛫 **[Flyway](https://flywaydb.org/)** — Versioned, repeatable database migrations (`flyway-mysql`).
+- 🛫 **[Flyway](https://flywaydb.org/)** — Versioned, repeatable database migrations (`flyway-database-postgresql`).
 - 🐇 **[RabbitMQ](https://www.rabbitmq.com/) + [Spring AMQP](https://spring.io/projects/spring-amqp)** — Asynchronous
   messaging and event-driven notifications.
-- 🐬 **[MySQL 8](https://www.mysql.com/)** — Relational database used in production.
+- 🐘 **[PostgreSQL 17](https://www.postgresql.org/)** — Relational database used in production.
 - 🗄️ **[H2](https://www.h2database.com/)** — In-memory database for local development and automated tests.
 - 🔑 **[JJWT](https://github.com/jwtk/jjwt)** — JWT token generation and validation.
 - 🪣 **[Bucket4j](https://github.com/bucket4j/bucket4j) + [Caffeine](https://github.com/ben-manes/caffeine)** — Rate
@@ -54,7 +54,7 @@ pipeline, and interactive documentation powered by **Swagger**.
 - 📦 **[Maven](https://maven.apache.org/)** — Dependency management and build automation (via Maven Wrapper).
 - 📊 **[JaCoCo](https://www.jacoco.org/jacoco/)** — Code coverage reports and minimum coverage enforcement.
 - 🐳 **[Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/)** — Multi-stage image for
-  the API, plus MySQL and RabbitMQ containers for a reproducible environment.
+  the API, plus PostgreSQL and RabbitMQ containers for a reproducible environment.
 - ⚙️ **[GitHub Actions](https://github.com/features/actions)** — Continuous integration, PR validation and automatic
   labeling.
 - 🤖 **[Dependabot](https://docs.github.com/en/code-security/dependabot)** — Automated dependency updates.
@@ -111,7 +111,7 @@ pipeline, and interactive documentation powered by **Swagger**.
 - [x] Multi-stage **Dockerfile** (JDK build stage, JRE runtime stage) producing a small runtime image
 - [x] Application runs as a **non-root** user
 - [x] Container memory limited by the JVM with `MaxRAMPercentage=75`
-- [x] **Docker Compose** orchestrates the API, MySQL and RabbitMQ, with health checks and startup ordering
+- [x] **Docker Compose** orchestrates the API, PostgreSQL and RabbitMQ, with health checks and startup ordering
 - [x] `.dockerignore` keeps build artifacts and local IDE/secret files out of the image
 
 ### 🧰 Quality & Developer Experience
@@ -134,7 +134,7 @@ pipeline, and interactive documentation powered by **Swagger**.
 ```text
 .
 ├── Dockerfile          # Multi-stage image for the API
-├── docker-compose.yml  # API + MySQL + RabbitMQ
+├── docker-compose.yml  # API + PostgreSQL + RabbitMQ
 ├── .env.example        # Environment variables template
 └── src/main/java/br/com/joschonarth/springfit
     ├── config/         # Security, JWT, rate limiting, OpenAPI, RabbitMQ and data seeder
@@ -156,7 +156,7 @@ pipeline, and interactive documentation powered by **Swagger**.
     └── validation/     # Custom validation annotations
 
 src/main/resources
-├── application.yaml        # Main configuration (MySQL, Flyway, JWT, RabbitMQ, rate limit)
+├── application.yaml        # Main configuration (PostgreSQL, Flyway, JWT, RabbitMQ, rate limit)
 ├── application-test.yml    # Test profile (H2 in-memory, Flyway disabled)
 └── db/migration/           # Flyway SQL migrations (V1__baseline_schema.sql, ...)
 ```
@@ -280,7 +280,6 @@ There are two ways to run SpringFit: the **full stack with Docker** (recommended
       | --- | --- | --- |
    | `APP_PORT` | `8080` | Host port the API is published on (Docker) |
    | `JWT_KEY` | *(none in Compose)* | Secret used to sign JWTs. **Required** when running with Docker |
-   | `DB_ROOT_PASSWORD` | — | MySQL root password (Docker only) |
    | `DB_NAME` | `springfit` | Database name |
    | `DB_USERNAME` | `docker` | Database user |
    | `DB_PASSWORD` | `docker` | Database password |
@@ -293,19 +292,19 @@ There are two ways to run SpringFit: the **full stack with Docker** (recommended
 
 ### 🐳 Option A — Full stack with Docker (recommended)
 
-Build the API image and start the API, MySQL and RabbitMQ together:
+Build the API image and start the API, PostgreSQL and RabbitMQ together:
 
 ```bash
 docker compose up -d --build
 ```
 
-Compose waits for MySQL and RabbitMQ to pass their health checks before starting the API. Flyway then applies the
+Compose waits for PostgreSQL and RabbitMQ to pass their health checks before starting the API. Flyway then applies the
 pending migrations automatically on the first start.
 
 | Service                | Port    | Notes                                         |
 |------------------------|---------|-----------------------------------------------|
 | API                    | `8080`  | Configurable with `APP_PORT`                  |
-| MySQL                  | `3306`  | Data persisted in the `mysql_data` volume     |
+| PostgreSQL                  | `5432`  | Data persisted in the `postgres_data` volume     |
 | RabbitMQ (AMQP)        | `5672`  | Data persisted in the `rabbitmq_data` volume  |
 | RabbitMQ Management UI | `15672` | Uses `RABBITMQ_USERNAME` / `RABBITMQ_PASSWORD` |
 
@@ -316,7 +315,7 @@ docker compose logs -f app
 docker compose down          # add -v to also remove the volumes
 ```
 
-> 💡 Inside Compose the API connects to MySQL and RabbitMQ using the service names (`mysql` and `rabbitmq`), so no extra configuration is needed.
+> 💡 Inside Compose the API connects to PostgreSQL and RabbitMQ using the service names (`postgres` and `rabbitmq`), so no extra configuration is needed.
 
 #### 🏗️ About the Dockerfile
 
@@ -325,7 +324,7 @@ The image is built in two stages to keep the final container small:
 1. **Build stage** (`eclipse-temurin:17-jdk`): downloads the Maven dependencies, then packages the application with `./mvnw clean package -DskipTests`.
 2. **Runtime stage** (`eclipse-temurin:17-jre`): contains only the JRE and the generated JAR. It runs as a dedicated, non-root `springfit` user and sets `JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"` so the JVM respects the container's memory limit.
 
-To build or run the image on its own (for example, against an external MySQL and RabbitMQ):
+To build or run the image on its own (for example, against an external PostgreSQL and RabbitMQ):
 
 ```bash
 docker build -t springfit-api .
@@ -341,7 +340,7 @@ docker run --rm -p 8080:8080 \
 1. Start only the infrastructure containers:
 
     ```bash
-    docker compose up -d mysql rabbitmq
+    docker compose up -d postgres rabbitmq
     ```
 
 2. Start the application:
@@ -367,8 +366,8 @@ Schema changes are managed by **Flyway**. The migration scripts live in `src/mai
 
 ### 🗄️ Alternative Database (H2)
 
-If you prefer to use the in-memory **H2** database instead of MySQL, comment out the MySQL block and uncomment the H2
-block in `src/main/resources/application.yaml`. Because the Flyway scripts are written for MySQL, Flyway must also be
+If you prefer to use the in-memory **H2** database instead of PostgreSQL, comment out the PostgreSQL block and uncomment the H2
+block in `src/main/resources/application.yaml`. Because the Flyway scripts are written for PostgreSQL, Flyway must also be
 disabled and Hibernate must create the schema from the entities:
 
 ```yaml
