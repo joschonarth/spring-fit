@@ -7,6 +7,7 @@ import br.com.joschonarth.springfit.dto.request.ExerciseRequestDTO;
 import br.com.joschonarth.springfit.dto.request.UpdateExerciseRequestDTO;
 import br.com.joschonarth.springfit.dto.response.ExerciseResponseDTO;
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
+import br.com.joschonarth.springfit.enums.MuscleGroup;
 import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,6 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +45,7 @@ class ExerciseServiceTest {
         exercise = ExerciseEntity.builder()
                 .id(exerciseId)
                 .name("Bench Press")
-                .muscleGroup("CHEST")
+                .muscleGroup(MuscleGroup.CHEST)
                 .equipment("Barbell")
                 .description("Compound chest exercise")
                 .difficultyLevel(DifficultyLevel.INTERMEDIATE)
@@ -90,7 +90,7 @@ class ExerciseServiceTest {
         void shouldSaveWithProvidedDifficultyLevel() {
             ExerciseRequestDTO dto = ExerciseRequestDTO.builder()
                     .name("Squat")
-                    .muscleGroup("LEGS")
+                    .muscleGroup(MuscleGroup.QUADRICEPS)
                     .equipment("Barbell")
                     .description("Leg exercise")
                     .difficultyLevel(DifficultyLevel.ADVANCED)
@@ -102,6 +102,7 @@ class ExerciseServiceTest {
             verify(exerciseRepository).save(captor.capture());
             assertThat(captor.getValue().getDifficultyLevel()).isEqualTo(DifficultyLevel.ADVANCED);
             assertThat(captor.getValue().getName()).isEqualTo("Squat");
+            assertThat(captor.getValue().getMuscleGroup()).isEqualTo(MuscleGroup.QUADRICEPS);
         }
 
         @Test
@@ -109,7 +110,7 @@ class ExerciseServiceTest {
         void shouldDefaultDifficultyLevelToBeginner() {
             ExerciseRequestDTO dto = ExerciseRequestDTO.builder()
                     .name("Plank")
-                    .muscleGroup("CORE")
+                    .muscleGroup(MuscleGroup.CORE)
                     .build();
 
             exerciseService.save(dto);
@@ -151,24 +152,34 @@ class ExerciseServiceTest {
     class GetExerciseByMuscleGroup {
 
         @Test
-        @DisplayName("should return exercises filtered by muscle group")
-        void shouldReturnExercisesByMuscleGroup() {
-            when(exerciseRepository.findByMuscleGroupIgnoreCase("chest")).thenReturn(List.of(exercise));
+        @DisplayName("should return exercises filtered by muscle group, ignoring case")
+        void shouldReturnExercisesByMuscleGroup() throws BadRequestException {
+            when(exerciseRepository.findByMuscleGroup(MuscleGroup.CHEST)).thenReturn(List.of(exercise));
 
             List<ExerciseResponseDTO> result = exerciseService.getExerciseByMuscleGroup("chest");
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getMuscleGroup()).isEqualTo("CHEST");
+            assertThat(result.get(0).getMuscleGroup()).isEqualTo(MuscleGroup.CHEST);
         }
 
         @Test
         @DisplayName("should return empty list when no exercise matches muscle group")
-        void shouldReturnEmptyListWhenNoMatch() {
-            when(exerciseRepository.findByMuscleGroupIgnoreCase(anyString())).thenReturn(List.of());
+        void shouldReturnEmptyListWhenNoMatch() throws BadRequestException {
+            when(exerciseRepository.findByMuscleGroup(MuscleGroup.BACK)).thenReturn(List.of());
 
-            List<ExerciseResponseDTO> result = exerciseService.getExerciseByMuscleGroup("UNKNOWN");
+            List<ExerciseResponseDTO> result = exerciseService.getExerciseByMuscleGroup("back");
 
             assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should throw BadRequestException when muscle group is not a valid value")
+        void shouldThrowWhenMuscleGroupIsInvalid() {
+            assertThatThrownBy(() -> exerciseService.getExerciseByMuscleGroup("UNKNOWN"))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessage("Invalid muscle group: UNKNOWN");
+
+            verifyNoInteractions(exerciseRepository);
         }
     }
 
@@ -192,8 +203,23 @@ class ExerciseServiceTest {
             assertThat(result.getName()).isEqualTo("Incline Bench Press");
             assertThat(result.getDifficultyLevel()).isEqualTo(DifficultyLevel.ADVANCED);
             // fields not provided must remain unchanged
-            assertThat(result.getMuscleGroup()).isEqualTo("CHEST");
+            assertThat(result.getMuscleGroup()).isEqualTo(MuscleGroup.CHEST);
             assertThat(result.getEquipment()).isEqualTo("Barbell");
+        }
+
+        @Test
+        @DisplayName("should update muscle group when provided")
+        void shouldUpdateMuscleGroup() throws NotFoundException {
+            UpdateExerciseRequestDTO dto = UpdateExerciseRequestDTO.builder()
+                    .muscleGroup(MuscleGroup.SHOULDERS)
+                    .build();
+
+            when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+            when(exerciseRepository.save(any(ExerciseEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            ExerciseResponseDTO result = exerciseService.updateExercise(exerciseId, dto);
+
+            assertThat(result.getMuscleGroup()).isEqualTo(MuscleGroup.SHOULDERS);
         }
 
         @Test
