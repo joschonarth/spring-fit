@@ -1,6 +1,7 @@
 package br.com.joschonarth.springfit.dto.response;
 
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
+import br.com.joschonarth.springfit.enums.MuscleGroup;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +25,7 @@ public class ExerciseResponseDTO {
     private String name;
 
     @Schema(description = "Muscle group targeted", example = "CHEST")
-    private String muscleGroup;
+    private MuscleGroup muscleGroup;
 
     @Schema(description = "Equipment needed", example = "Barbell")
     private String equipment;

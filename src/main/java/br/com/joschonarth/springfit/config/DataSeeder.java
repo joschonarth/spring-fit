@@ -7,6 +7,7 @@ import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
 import br.com.joschonarth.springfit.database.repository.IRolesRepository;
 import br.com.joschonarth.springfit.database.repository.IStudentRepository;
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
+import br.com.joschonarth.springfit.enums.MuscleGroup;
 import br.com.joschonarth.springfit.enums.RoleTypeEnum;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -64,7 +65,7 @@ public class DataSeeder implements CommandLineRunner {
         exerciseRepository.saveAll(List.of(
                 ExerciseEntity.builder()
                         .name("Bench Press")
-                        .muscleGroup("CHEST")
+                        .muscleGroup(MuscleGroup.CHEST)
                         .equipment("Barbell")
                         .description("Compound chest exercise focused on strength and hypertrophy.")
                         .difficultyLevel(DifficultyLevel.INTERMEDIATE)
@@ -72,7 +73,7 @@ public class DataSeeder implements CommandLineRunner {
 
                 ExerciseEntity.builder()
                         .name("Pull Up")
-                        .muscleGroup("BACK")
+                        .muscleGroup(MuscleGroup.BACK)
                         .equipment("Bar")
                         .description("Bodyweight exercise that strengthens the back and biceps.")
                         .difficultyLevel(DifficultyLevel.ADVANCED)
@@ -80,15 +81,15 @@ public class DataSeeder implements CommandLineRunner {
 
                 ExerciseEntity.builder()
                         .name("Squat")
-                        .muscleGroup("LEGS")
+                        .muscleGroup(MuscleGroup.QUADRICEPS)
                         .equipment("Barbell")
-                        .description("Fundamental lower body exercise targeting legs and glutes.")
+                        .description("Fundamental lower body exercise targeting quadriceps.")
                         .difficultyLevel(DifficultyLevel.INTERMEDIATE)
                         .build(),
 
                 ExerciseEntity.builder()
                         .name("Shoulder Press")
-                        .muscleGroup("SHOULDERS")
+                        .muscleGroup(MuscleGroup.SHOULDERS)
                         .equipment("Dumbbell")
                         .description("Upper body exercise focused on shoulder development.")
                         .difficultyLevel(DifficultyLevel.BEGINNER)
@@ -96,7 +97,7 @@ public class DataSeeder implements CommandLineRunner {
 
                 ExerciseEntity.builder()
                         .name("Bicep Curl")
-                        .muscleGroup("ARMS")
+                        .muscleGroup(MuscleGroup.FOREARMS)
                         .equipment("Dumbbell")
                         .description("Isolation exercise designed to strengthen the biceps.")
                         .difficultyLevel(DifficultyLevel.BEGINNER)

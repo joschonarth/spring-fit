@@ -56,13 +56,14 @@ public class ExerciseController {
     @Operation(summary = "List exercises by muscle group")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Exercises retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid muscle group"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @GetMapping("/group/{muscleGroup}")
     @ResponseStatus(HttpStatus.OK)
     public List<ExerciseResponseDTO> getExerciseByMuscleGroup(
             @Parameter(description = "Muscle group name", example = "CHEST")
-            @PathVariable String muscleGroup) {
+            @PathVariable String muscleGroup) throws BadRequestException {
         return exerciseService.getExerciseByMuscleGroup(muscleGroup);
     }
 

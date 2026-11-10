@@ -3,15 +3,17 @@ package br.com.joschonarth.springfit.service;
 import br.com.joschonarth.springfit.database.model.ExerciseEntity;
 import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
 import br.com.joschonarth.springfit.dto.request.ExerciseRequestDTO;
-import br.com.joschonarth.springfit.dto.response.ExerciseResponseDTO;
 import br.com.joschonarth.springfit.dto.request.UpdateExerciseRequestDTO;
+import br.com.joschonarth.springfit.dto.response.ExerciseResponseDTO;
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
+import br.com.joschonarth.springfit.enums.MuscleGroup;
 import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -48,8 +50,10 @@ public class ExerciseService {
         return toResponseDTO(exercise);
     }
 
-    public List<ExerciseResponseDTO> getExerciseByMuscleGroup(String muscleGroup) {
-        return exerciseRepository.findByMuscleGroupIgnoreCase(muscleGroup).stream()
+    public List<ExerciseResponseDTO> getExerciseByMuscleGroup(String muscleGroup) throws BadRequestException {
+        MuscleGroup group = parseMuscleGroup(muscleGroup);
+
+        return exerciseRepository.findByMuscleGroup(group).stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
@@ -76,6 +80,14 @@ public class ExerciseService {
         }
 
         exerciseRepository.deleteById(id);
+    }
+
+    private MuscleGroup parseMuscleGroup(String value) throws BadRequestException {
+        try {
+            return MuscleGroup.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid muscle group: " + value);
+        }
     }
 
     private ExerciseResponseDTO toResponseDTO(ExerciseEntity exercise) {

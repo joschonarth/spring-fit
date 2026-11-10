@@ -1,6 +1,7 @@
 package br.com.joschonarth.springfit.database.model;
 
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
+import br.com.joschonarth.springfit.enums.MuscleGroup;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -26,8 +27,9 @@ public class ExerciseEntity {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "muscle_group", nullable = false)
-    private String muscleGroup;
+    private MuscleGroup muscleGroup;
 
     @Column()
     private String equipment;

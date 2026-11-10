@@ -13,6 +13,7 @@ import br.com.joschonarth.springfit.dto.request.WorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.response.ExerciseResponseDTO;
 import br.com.joschonarth.springfit.dto.response.WorkoutResponseDTO;
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
+import br.com.joschonarth.springfit.enums.MuscleGroup;
 import br.com.joschonarth.springfit.exception.BadRequestException;
 import br.com.joschonarth.springfit.exception.NotFoundException;
 import org.junit.jupiter.api.AfterEach;
@@ -74,9 +75,9 @@ class WorkoutServiceTest {
         admin = StudentEntity.builder().id(UUID.randomUUID()).name("Admin").roles(Set.of(adminRole)).build();
 
         benchPress = ExerciseEntity.builder().id(UUID.randomUUID()).name("Bench Press")
-                .muscleGroup("CHEST").difficultyLevel(DifficultyLevel.INTERMEDIATE).build();
+                .muscleGroup(MuscleGroup.CHEST).difficultyLevel(DifficultyLevel.INTERMEDIATE).build();
         squat = ExerciseEntity.builder().id(UUID.randomUUID()).name("Squat")
-                .muscleGroup("LEGS").difficultyLevel(DifficultyLevel.INTERMEDIATE).build();
+                .muscleGroup(MuscleGroup.QUADRICEPS).difficultyLevel(DifficultyLevel.INTERMEDIATE).build();
 
         workoutId = UUID.randomUUID();
         workout = WorkoutEntity.builder()
