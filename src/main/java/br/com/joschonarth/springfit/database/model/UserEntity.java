@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
-@Table(name = "student")
+@Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
-public class StudentEntity implements UserDetails {
+public class UserEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -43,19 +43,22 @@ public class StudentEntity implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @OrderBy("createdAt DESC")
+    @Builder.Default
     private List<PhysicalAssessmentEntity> physicalAssessments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<WorkoutEntity> workouts = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "student_roles",
-            joinColumns = @JoinColumn(name = "student_id"),
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+    @Builder.Default
     private Set<RolesEntity> roles = new HashSet<>();
 
     @Override

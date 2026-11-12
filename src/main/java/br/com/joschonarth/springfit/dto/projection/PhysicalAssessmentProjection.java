@@ -8,8 +8,8 @@ import java.util.UUID;
 
 public interface PhysicalAssessmentProjection {
 
-    UUID getStudentId();
-    String getStudentName();
+    UUID getUserId();
+    String getUserName();
     UUID getAssessmentId();
     BigDecimal getWeight();
     BigDecimal getHeight();

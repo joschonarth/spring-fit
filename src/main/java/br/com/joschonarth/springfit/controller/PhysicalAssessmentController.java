@@ -32,7 +32,7 @@ public class PhysicalAssessmentController {
             @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Forbidden - only ADMIN can create assessments"),
-            @ApiResponse(responseCode = "404", description = "Student not found")
+            @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping

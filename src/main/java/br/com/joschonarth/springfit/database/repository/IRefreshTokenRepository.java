@@ -15,8 +15,8 @@ public interface IRefreshTokenRepository extends JpaRepository<RefreshTokenEntit
     Optional<RefreshTokenEntity> findByTokenHash(String tokenHash);
 
     @Modifying
-    @Query("UPDATE RefreshTokenEntity r SET r.revoked = true WHERE r.student.id = :studentId AND r.revoked = false")
-    void revokeAllByStudentId(@Param("studentId") UUID studentId);
+    @Query("UPDATE RefreshTokenEntity r SET r.revoked = true WHERE r.user.id = :userId AND r.revoked = false")
+    void revokeAllByUserId(@Param("userId") UUID userId);
 
     @Modifying
     @Query("DELETE FROM RefreshTokenEntity r WHERE r.expiresAt < :now")

@@ -34,17 +34,17 @@ class NotificationServiceTest {
     @InjectMocks
     private NotificationService notificationService;
 
-    private UUID studentId;
+    private UUID userId;
     private UUID notificationId;
     private NotificationEntity notification;
 
     @BeforeEach
     void setUp() {
-        studentId = UUID.randomUUID();
+        userId = UUID.randomUUID();
         notificationId = UUID.randomUUID();
         notification = NotificationEntity.builder()
                 .id(notificationId)
-                .studentId(studentId)
+                .userId(userId)
                 .message("Your new physical assessment has been recorded. BMI: 23.55 (NORMAL)")
                 .read(false)
                 .createdAt(LocalDateTime.of(2026, 9, 27, 21, 16, 47))
@@ -52,16 +52,16 @@ class NotificationServiceTest {
     }
 
     @Nested
-    @DisplayName("getStudentNotifications")
-    class GetStudentNotifications {
+    @DisplayName("getUserNotifications")
+    class GetUserNotifications {
 
         @Test
         @DisplayName("should return notifications mapped to response DTO")
         void shouldReturnNotificationsMappedToDTO() {
-            when(notificationRepository.findAllByStudentIdOrderByCreatedAtDesc(studentId))
+            when(notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId))
                     .thenReturn(List.of(notification));
 
-            List<NotificationResponseDTO> result = notificationService.getStudentNotifications(studentId);
+            List<NotificationResponseDTO> result = notificationService.getUserNotifications(userId);
 
             assertThat(result).hasSize(1);
             NotificationResponseDTO dto = result.get(0);
@@ -79,22 +79,22 @@ class NotificationServiceTest {
         @Test
         @DisplayName("should mark notification as read and save it")
         void shouldMarkNotificationAsRead() throws NotFoundException {
-            when(notificationRepository.findByIdAndStudentId(notificationId, studentId))
+            when(notificationRepository.findByIdAndUserId(notificationId, userId))
                     .thenReturn(Optional.of(notification));
 
-            notificationService.markAsRead(studentId, notificationId);
+            notificationService.markAsRead(userId, notificationId);
 
             assertThat(notification.isRead()).isTrue();
             verify(notificationRepository).save(notification);
         }
 
         @Test
-        @DisplayName("should throw NotFoundException when notification does not exist for the student")
+        @DisplayName("should throw NotFoundException when notification does not exist for the user")
         void shouldThrowWhenNotificationNotFound() {
-            when(notificationRepository.findByIdAndStudentId(notificationId, studentId))
+            when(notificationRepository.findByIdAndUserId(notificationId, userId))
                     .thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> notificationService.markAsRead(studentId, notificationId))
+            assertThatThrownBy(() -> notificationService.markAsRead(userId, notificationId))
                     .isInstanceOf(NotFoundException.class)
                     .hasMessage("Notification not found");
 
@@ -111,16 +111,16 @@ class NotificationServiceTest {
         void shouldMarkAllUnreadNotificationsAsRead() {
             NotificationEntity second = NotificationEntity.builder()
                     .id(UUID.randomUUID())
-                    .studentId(studentId)
+                    .userId(userId)
                     .message("Second notification")
                     .read(false)
                     .createdAt(LocalDateTime.of(2026, 9, 28, 10, 0))
                     .build();
             List<NotificationEntity> unread = List.of(notification, second);
 
-            when(notificationRepository.findAllByStudentIdAndReadFalse(studentId)).thenReturn(unread);
+            when(notificationRepository.findAllByUserIdAndReadFalse(userId)).thenReturn(unread);
 
-            notificationService.markAllAsRead(studentId);
+            notificationService.markAllAsRead(userId);
 
             assertThat(unread).allMatch(NotificationEntity::isRead);
             verify(notificationRepository).saveAll(unread);

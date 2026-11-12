@@ -2,7 +2,7 @@
 
 # 🌱 SpringFit
 
-*A modern REST API for managing gyms, students, and workouts with Spring Boot.*
+*A modern REST API for managing gyms, users, and workouts with Spring Boot.*
 
 <img src="https://img.shields.io/github/last-commit/joschonarth/spring-fit?style=default&logo=git&logoColor=white&color=6DB33F&labelColor=27272a" alt="last-commit">
 <img src="https://img.shields.io/github/languages/top/joschonarth/spring-fit?style=default&color=6DB33F&labelColor=27272a" alt="repo-top-language">
@@ -25,7 +25,7 @@
 ## 📃 About
 
 **SpringFit** is a REST API for gym management built with **Spring Boot** and **Spring Security**. It allows you to
-register students, create personalized workouts, manage exercises by muscle group, and record physical assessments.
+register users, create personalized workouts, manage exercises by muscle group, and record physical assessments.
 
 The API features **JWT** authentication with **refresh token rotation**, role-based access control, **rate limiting**,
 **event-driven notifications** powered by **RabbitMQ**, **versioned database migrations** with **Flyway**, **code
@@ -78,25 +78,25 @@ pipeline, and interactive documentation powered by **Swagger**.
 - [x] Scheduled job that cleans up expired refresh tokens daily at 03:00
 - [x] Passwords hashed with BCrypt, with validation rules (minimum length, letter + digit, max 72 bytes)
 - [x] Role-based access control (`ADMIN` and `STUDENT`)
-- [x] Ownership checks with `@PreAuthorize` (students can only access their own data)
+- [x] Ownership checks with `@PreAuthorize` (users can only access their own data)
 - [x] **Rate limiting** per client IP: stricter limit on `/v1/auth/**`, general limit on the rest of the API
 - [x] Standard `429 Too Many Requests` responses with `Retry-After`, and `X-Rate-Limit-Remaining` on successful calls
 
 ### 🏋️ Gym Management
 
-- [x] Student registration, profile update, lookup and removal (cascades to workouts and assessments)
-- [x] Personalized workouts per student: create, update, delete, and list
+- [x] User registration, profile update, lookup and removal (cascades to workouts and assessments)
+- [x] Personalized workouts per user: create, update, delete, and list
 - [x] Add and remove exercises from a workout (a workout must keep at least one exercise)
 - [x] Exercise management by muscle group, with default difficulty level
 - [x] Protection against deleting exercises that belong to workouts
 - [x] Physical assessment registration (admin only) with automatic **BMI** calculation and classification
 - [x] Assessment listing with projections and **pagination**
-- [x] Students can only view their own physical assessments
+- [x] Users can only view their own physical assessments
 
 ### 📨 Event-Driven Notifications
 
 - [x] `PhysicalAssessmentCreatedEvent` published to RabbitMQ when an assessment is created
-- [x] Listener that turns each event into a student notification
+- [x] Listener that turns each event into a user notification
 - [x] Notification listing, "mark as read" and "mark all as read" endpoints
 - [x] Retry with exponential backoff and a **Dead Letter Queue** for failed messages
 
@@ -118,7 +118,7 @@ pipeline, and interactive documentation powered by **Swagger**.
 
 - [x] Global exception handler with standardized error responses
 - [x] Detailed validation error responses (field + message)
-- [x] Data seeder with an admin, a student and sample exercises
+- [x] Data seeder with an admin, a user and sample exercises
 - [x] Unit tests for the service layer (exercises, workouts, notifications, physical assessments) and application context test
 - [x] **JaCoCo** coverage report, with a build gate requiring at least **30% line coverage**
 - [x] CI pipeline with GitHub Actions
@@ -167,7 +167,7 @@ src/main/resources
 
 ```mermaid
 erDiagram
-    student {
+    user {
         uuid id PK
         string name
         string email
@@ -180,14 +180,14 @@ erDiagram
         uuid id PK
         string name
     }
-    student_roles {
-        uuid student_id PK, FK
+    user_roles {
+        uuid user_id PK, FK
         uuid role_id PK, FK
     }
     refresh_token {
         uuid id PK
         string token_hash
-        uuid student_id FK
+        uuid user_id FK
         instant expires_at
         boolean revoked
     }
@@ -198,7 +198,7 @@ erDiagram
         decimal body_fat_percentage
         decimal bmi
         string bmi_classification
-        uuid student_id FK
+        uuid user_id FK
         datetime created_at
         datetime updated_at
     }
@@ -207,7 +207,7 @@ erDiagram
         string name
         string objective
         string description
-        uuid student_id FK
+        uuid user_id FK
         datetime created_at
         datetime updated_at
     }
@@ -226,17 +226,17 @@ erDiagram
     }
     notification {
         uuid id PK
-        uuid student_id
+        uuid user_id
         string message
         boolean is_read
         datetime created_at
     }
-    student ||--o{ student_roles : "has"
-    roles ||--o{ student_roles : "assigned to"
-    student ||--o{ refresh_token : "owns"
-    student ||--o{ physical_assessment : "has history of"
-    student ||--o{ workout : "has"
-    student ||--o{ notification : "receives"
+    user ||--o{ user_roles : "has"
+    roles ||--o{ user_roles : "assigned to"
+    user ||--o{ refresh_token : "owns"
+    user ||--o{ physical_assessment : "has history of"
+    user ||--o{ workout : "has"
+    user ||--o{ notification : "receives"
     workout ||--o{ workout_exercise : "contains"
     exercise ||--o{ workout_exercise : "used in"
 ```
@@ -475,7 +475,7 @@ PR titles follow Conventional Commits. Accepted types: `feat`, `fix`, `docs`, `s
 `build`, `ci`, `chore`, `revert` and `deps`.
 
 ```text
-feat(workout): add endpoint to list workouts by student
+feat(workout): add endpoint to list workouts by user
 fix: handle expired refresh token
 ```
 

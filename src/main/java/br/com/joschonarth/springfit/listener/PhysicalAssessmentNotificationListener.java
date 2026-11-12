@@ -28,11 +28,11 @@ public class PhysicalAssessmentNotificationListener {
         );
 
         notificationRepository.save(NotificationEntity.builder()
-                .studentId(event.studentId())
+                .userId(event.userId())
                 .message(message)
                 .read(false)
                 .build());
 
-        log.info("Notification created for student {}: {}", event.studentId(), message);
+        log.info("Notification created for user {}: {}", event.userId(), message);
     }
 }

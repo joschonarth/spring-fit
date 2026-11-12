@@ -23,8 +23,8 @@ public class RefreshTokenEntity {
     private String tokenHash;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
-    private StudentEntity student;
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;

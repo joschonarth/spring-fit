@@ -42,8 +42,8 @@ public class PhysicalAssessmentEntity {
     private BmiClassification bmiClassification;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
-    private StudentEntity student;
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -14,8 +14,8 @@ import java.util.UUID;
 public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAssessmentEntity, UUID> {
 
     @Query("""
-        SELECT s.id AS studentId,
-               s.name AS studentName,
+        SELECT u.id AS userId,
+               u.name AS userName,
                pa.id AS assessmentId,
                pa.weight AS weight,
                pa.height AS height,
@@ -25,13 +25,13 @@ public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAss
                pa.createdAt AS createdAt,
                pa.updatedAt AS updatedAt
         FROM PhysicalAssessmentEntity pa
-        JOIN pa.student s
+        JOIN pa.user u
         """)
     List<PhysicalAssessmentProjection> getAllAssessments();
 
     @Query(value = """
-        SELECT s.id AS studentId,
-               s.name AS studentName,
+        SELECT u.id AS userId,
+               u.name AS userName,
                pa.id AS assessmentId,
                pa.weight AS weight,
                pa.height AS height,
@@ -41,18 +41,18 @@ public interface IPhysicalAssessmentRepository extends JpaRepository<PhysicalAss
                pa.createdAt AS createdAt,
                pa.updatedAt AS updatedAt
         FROM PhysicalAssessmentEntity pa
-        JOIN pa.student s
+        JOIN pa.user u
         """,
     countQuery = """
         SELECT count(pa.id)
         FROM PhysicalAssessmentEntity pa
-        JOIN pa.student s
+        JOIN pa.user u
         """)
     Page<PhysicalAssessmentProjection> getAllAssessmentsPage(Pageable pageable);
 
-    Optional<PhysicalAssessmentEntity> findByIdAndStudentId(UUID assessmentId, UUID studentId);
+    Optional<PhysicalAssessmentEntity> findByIdAndUserId(UUID assessmentId, UUID userId);
 
-    List<PhysicalAssessmentEntity> findAllByStudentIdOrderByCreatedAtDesc(UUID studentId);
+    List<PhysicalAssessmentEntity> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    void deleteAllByStudentId(UUID studentId);
+    void deleteAllByUserId(UUID userId);
 }

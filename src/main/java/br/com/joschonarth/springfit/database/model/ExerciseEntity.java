@@ -46,5 +46,6 @@ public class ExerciseEntity {
     private LocalDateTime createdAt;
 
     @ManyToMany(mappedBy = "exercises")
+    @Builder.Default
     private Set<WorkoutEntity> workouts = new HashSet<>();
 }

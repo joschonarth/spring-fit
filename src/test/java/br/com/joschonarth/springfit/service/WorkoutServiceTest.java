@@ -2,10 +2,10 @@ package br.com.joschonarth.springfit.service;
 
 import br.com.joschonarth.springfit.database.model.ExerciseEntity;
 import br.com.joschonarth.springfit.database.model.RolesEntity;
-import br.com.joschonarth.springfit.database.model.StudentEntity;
+import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.model.WorkoutEntity;
 import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
-import br.com.joschonarth.springfit.database.repository.IStudentRepository;
+import br.com.joschonarth.springfit.database.repository.IUserRepository;
 import br.com.joschonarth.springfit.database.repository.IWorkoutRepository;
 import br.com.joschonarth.springfit.dto.request.UpdateWorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.request.WorkoutExercisesRequestDTO;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 class WorkoutServiceTest {
 
     @Mock
-    private IStudentRepository studentRepository;
+    private IUserRepository userRepository;
 
     @Mock
     private IExerciseRepository exerciseRepository;
@@ -57,9 +57,9 @@ class WorkoutServiceTest {
     @InjectMocks
     private WorkoutService workoutService;
 
-    private StudentEntity student;
-    private StudentEntity otherStudent;
-    private StudentEntity admin;
+    private UserEntity user;
+    private UserEntity otherUser;
+    private UserEntity admin;
     private ExerciseEntity benchPress;
     private ExerciseEntity squat;
     private UUID workoutId;
@@ -67,12 +67,12 @@ class WorkoutServiceTest {
 
     @BeforeEach
     void setUp() {
-        RolesEntity studentRole = RolesEntity.builder().name("ROLE_STUDENT").build();
+        RolesEntity userRole = RolesEntity.builder().name("ROLE_STUDENT").build();
         RolesEntity adminRole = RolesEntity.builder().name("ROLE_ADMIN").build();
 
-        student = StudentEntity.builder().id(UUID.randomUUID()).name("John").roles(Set.of(studentRole)).build();
-        otherStudent = StudentEntity.builder().id(UUID.randomUUID()).name("Jane").roles(Set.of(studentRole)).build();
-        admin = StudentEntity.builder().id(UUID.randomUUID()).name("Admin").roles(Set.of(adminRole)).build();
+        user = UserEntity.builder().id(UUID.randomUUID()).name("John").roles(Set.of(userRole)).build();
+        otherUser = UserEntity.builder().id(UUID.randomUUID()).name("Jane").roles(Set.of(userRole)).build();
+        admin = UserEntity.builder().id(UUID.randomUUID()).name("Admin").roles(Set.of(adminRole)).build();
 
         benchPress = ExerciseEntity.builder().id(UUID.randomUUID()).name("Bench Press")
                 .muscleGroup(MuscleGroup.CHEST).difficultyLevel(DifficultyLevel.INTERMEDIATE).build();
@@ -85,11 +85,11 @@ class WorkoutServiceTest {
                 .name("Upper Body A")
                 .objective("Hypertrophy")
                 .description("Compound movements")
-                .student(student)
+                .user(user)
                 .exercises(new HashSet<>(Set.of(benchPress)))
                 .build();
 
-        authenticateAs(student);
+        authenticateAs(user);
     }
 
     @AfterEach
@@ -97,7 +97,7 @@ class WorkoutServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    private void authenticateAs(StudentEntity user) {
+    private void authenticateAs(UserEntity user) {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
     }
@@ -110,51 +110,51 @@ class WorkoutServiceTest {
     @DisplayName("createWorkout")
     class CreateWorkout {
 
-        private WorkoutRequestDTO requestFor(UUID studentId) {
+        private WorkoutRequestDTO requestFor(UUID userId) {
             return WorkoutRequestDTO.builder()
-                    .studentId(studentId)
+                    .userId(userId)
                     .name("Lower Body A")
                     .exerciseId(List.of(squat.getId()))
                     .build();
         }
 
         @Test
-        @DisplayName("should create a workout for the authenticated student")
+        @DisplayName("should create a workout for the authenticated user")
         void shouldCreateWorkoutForSelf() throws NotFoundException, BadRequestException {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
-            when(workoutRepository.findByNameAndStudentId("Lower Body A", student.getId()))
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(workoutRepository.findByNameAndUserId("Lower Body A", user.getId()))
                     .thenReturn(Optional.empty());
             when(exerciseRepository.findById(squat.getId())).thenReturn(Optional.of(squat));
 
-            workoutService.createWorkout(requestFor(student.getId()));
+            workoutService.createWorkout(requestFor(user.getId()));
 
             ArgumentCaptor<WorkoutEntity> captor = ArgumentCaptor.forClass(WorkoutEntity.class);
             verify(workoutRepository).save(captor.capture());
             assertThat(captor.getValue().getName()).isEqualTo("Lower Body A");
-            assertThat(captor.getValue().getStudent()).isSameAs(student);
+            assertThat(captor.getValue().getUser()).isSameAs(user);
             assertThat(captor.getValue().getExercises()).containsExactly(squat);
         }
 
         @Test
-        @DisplayName("should throw when a student creates a workout for someone else")
-        void shouldThrowWhenStudentCreatesForAnotherStudent() {
-            assertThatThrownBy(() -> workoutService.createWorkout(requestFor(otherStudent.getId())))
+        @DisplayName("should throw when a user creates a workout for someone else")
+        void shouldThrowWhenUserCreatesForAnotherUser() {
+            assertThatThrownBy(() -> workoutService.createWorkout(requestFor(otherUser.getId())))
                     .isInstanceOf(BadRequestException.class)
-                    .hasMessage("Students can only create workouts for themselves");
+                    .hasMessage("Users can only create workouts for themselves");
 
             verify(workoutRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("should throw when the student already has a workout with that name")
+        @DisplayName("should throw when the user already has a workout with that name")
         void shouldThrowWhenNameAlreadyExists() {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
-            when(workoutRepository.findByNameAndStudentId("Lower Body A", student.getId()))
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(workoutRepository.findByNameAndUserId("Lower Body A", user.getId()))
                     .thenReturn(Optional.of(workout));
 
-            assertThatThrownBy(() -> workoutService.createWorkout(requestFor(student.getId())))
+            assertThatThrownBy(() -> workoutService.createWorkout(requestFor(user.getId())))
                     .isInstanceOf(BadRequestException.class)
-                    .hasMessage("Already exists a workout with this name for this student");
+                    .hasMessage("Already exists a workout with this name for this user");
 
             verify(workoutRepository, never()).save(any());
         }
@@ -172,11 +172,11 @@ class WorkoutServiceTest {
             WorkoutResponseDTO result = workoutService.getWorkoutById(workoutId);
 
             assertThat(result.getId()).isEqualTo(workoutId);
-            assertThat(result.getStudentId()).isEqualTo(student.getId());
+            assertThat(result.getUserId()).isEqualTo(user.getId());
         }
 
         @Test
-        @DisplayName("should return another student's workout for ADMIN")
+        @DisplayName("should return another user's workout for ADMIN")
         void shouldReturnForAdmin() throws NotFoundException {
             authenticateAs(admin);
             when(workoutRepository.findById(workoutId)).thenReturn(Optional.of(workout));
@@ -185,9 +185,9 @@ class WorkoutServiceTest {
         }
 
         @Test
-        @DisplayName("should throw NotFoundException when a student accesses another student's workout")
-        void shouldThrowForAnotherStudent() {
-            authenticateAs(otherStudent);
+        @DisplayName("should throw NotFoundException when a user accesses another user's workout")
+        void shouldThrowForAnotherUser() {
+            authenticateAs(otherUser);
             when(workoutRepository.findById(workoutId)).thenReturn(Optional.of(workout));
 
             assertThatThrownBy(() -> workoutService.getWorkoutById(workoutId))
@@ -197,26 +197,26 @@ class WorkoutServiceTest {
     }
 
     @Nested
-    @DisplayName("getWorkoutsByStudentId")
-    class GetWorkoutsByStudentId {
+    @DisplayName("getWorkoutsByUserId")
+    class GetWorkoutsByUserId {
 
         @Test
-        @DisplayName("should return the workouts of the given student")
+        @DisplayName("should return the workouts of the given user")
         void shouldReturnWorkouts() throws NotFoundException {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
-            when(workoutRepository.findAllByStudentId(student.getId())).thenReturn(List.of(workout));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(workoutRepository.findAllByUserId(user.getId())).thenReturn(List.of(workout));
 
-            assertThat(workoutService.getWorkoutsByStudentId(student.getId())).hasSize(1);
+            assertThat(workoutService.getWorkoutsByUserId(user.getId())).hasSize(1);
         }
 
         @Test
-        @DisplayName("should throw NotFoundException when the student does not exist")
-        void shouldThrowWhenStudentNotFound() {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.empty());
+        @DisplayName("should throw NotFoundException when the user does not exist")
+        void shouldThrowWhenUserNotFound() {
+            when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> workoutService.getWorkoutsByStudentId(student.getId()))
+            assertThatThrownBy(() -> workoutService.getWorkoutsByUserId(user.getId()))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessage("Student not found");
+                    .hasMessage("User not found");
         }
     }
 
@@ -240,26 +240,26 @@ class WorkoutServiceTest {
         }
 
         @Test
-        @DisplayName("should throw when the new name is already used by the student")
+        @DisplayName("should throw when the new name is already used by the user")
         void shouldThrowWhenNewNameAlreadyExists() {
             UpdateWorkoutRequestDTO dto = new UpdateWorkoutRequestDTO();
             dto.setName("Lower Body A");
 
             when(workoutRepository.findById(workoutId)).thenReturn(Optional.of(workout));
-            when(workoutRepository.findByNameAndStudentId("Lower Body A", student.getId()))
+            when(workoutRepository.findByNameAndUserId("Lower Body A", user.getId()))
                     .thenReturn(Optional.of(WorkoutEntity.builder().name("Lower Body A").build()));
 
             assertThatThrownBy(() -> workoutService.updateWorkout(workoutId, dto))
                     .isInstanceOf(BadRequestException.class)
-                    .hasMessage("Already exists a workout with this name for this student");
+                    .hasMessage("Already exists a workout with this name for this user");
 
             verify(workoutRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("should throw NotFoundException when a student updates another student's workout")
-        void shouldThrowForAnotherStudent() {
-            authenticateAs(otherStudent);
+        @DisplayName("should throw NotFoundException when a user updates another user's workout")
+        void shouldThrowForAnotherUser() {
+            authenticateAs(otherUser);
             UpdateWorkoutRequestDTO dto = new UpdateWorkoutRequestDTO();
             dto.setName("Hacked");
 
@@ -288,9 +288,9 @@ class WorkoutServiceTest {
         }
 
         @Test
-        @DisplayName("should throw NotFoundException when a student deletes another student's workout")
-        void shouldThrowForAnotherStudent() {
-            authenticateAs(otherStudent);
+        @DisplayName("should throw NotFoundException when a user deletes another user's workout")
+        void shouldThrowForAnotherUser() {
+            authenticateAs(otherUser);
             when(workoutRepository.findById(workoutId)).thenReturn(Optional.of(workout));
 
             assertThatThrownBy(() -> workoutService.deleteWorkout(workoutId))
