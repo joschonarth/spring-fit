@@ -6,8 +6,8 @@ import java.util.UUID;
 
 public record PhysicalAssessmentCreatedEvent(
         UUID assessmentId,
-        UUID studentId,
-        String studentName,
+        UUID userId,
+        String userName,
         BigDecimal bmi,
         String bmiClassification,
         LocalDateTime createdAt

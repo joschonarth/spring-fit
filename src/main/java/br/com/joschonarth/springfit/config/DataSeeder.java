@@ -2,10 +2,10 @@ package br.com.joschonarth.springfit.config;
 
 import br.com.joschonarth.springfit.database.model.ExerciseEntity;
 import br.com.joschonarth.springfit.database.model.RolesEntity;
-import br.com.joschonarth.springfit.database.model.StudentEntity;
+import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
 import br.com.joschonarth.springfit.database.repository.IRolesRepository;
-import br.com.joschonarth.springfit.database.repository.IStudentRepository;
+import br.com.joschonarth.springfit.database.repository.IUserRepository;
 import br.com.joschonarth.springfit.enums.DifficultyLevel;
 import br.com.joschonarth.springfit.enums.MuscleGroup;
 import br.com.joschonarth.springfit.enums.RoleTypeEnum;
@@ -23,7 +23,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
-    private final IStudentRepository studentRepository;
+    private final IUserRepository userRepository;
     private final IRolesRepository rolesRepository;
     private final IExerciseRepository exerciseRepository;
     private final PasswordEncoder passwordEncoder;
@@ -31,20 +31,20 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String @NonNull ... args) {
 
-        if (studentRepository.count() > 0) return;
+        if (userRepository.count() > 0) return;
 
         RolesEntity adminRole = rolesRepository.findByName(RoleTypeEnum.ROLE_ADMIN.name())
                 .orElseGet(() -> rolesRepository.save(RolesEntity.builder()
                         .name(RoleTypeEnum.ROLE_ADMIN.name())
                         .build()));
 
-        RolesEntity studentRole = rolesRepository.findByName(RoleTypeEnum.ROLE_STUDENT.name())
+        RolesEntity userRole = rolesRepository.findByName(RoleTypeEnum.ROLE_STUDENT.name())
                 .orElseGet(() -> rolesRepository.save(RolesEntity.builder()
                         .name(RoleTypeEnum.ROLE_STUDENT.name())
                         .build()));
 
-        studentRepository.saveAll(List.of(
-                StudentEntity.builder()
+        userRepository.saveAll(List.of(
+                UserEntity.builder()
                         .name("Admin")
                         .email("admin@example.com")
                         .password(passwordEncoder.encode("admin123"))
@@ -52,13 +52,13 @@ public class DataSeeder implements CommandLineRunner {
                         .phone("(11) 99999-0001")
                         .roles(Set.of(adminRole))
                         .build(),
-                StudentEntity.builder()
+                UserEntity.builder()
                         .name("John Doe")
                         .email("johndoe@example.com")
                         .password(passwordEncoder.encode("john123"))
                         .birthDate(LocalDate.of(2000, 6, 15))
                         .phone("(11) 99999-0002")
-                        .roles(Set.of(studentRole))
+                        .roles(Set.of(userRole))
                         .build()
         ));
 

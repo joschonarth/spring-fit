@@ -19,16 +19,16 @@ import java.util.UUID;
 @Schema(description = "Request body for creating a physical assessment")
 public class PhysicalAssessmentRequestDTO {
 
-    @Schema(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    @Schema(description = "User ID", example = "123e4567-e89b-12d3-a456-426614174000")
     @NotNull
-    private UUID studentId;
+    private UUID userId;
 
-    @Schema(description = "Student weight in kg", example = "85.5")
+    @Schema(description = "User weight in kg", example = "85.5")
     @NotNull
     @DecimalMin(value = "0.1", message = "Weight must be greater than zero")
     private BigDecimal weight;
 
-    @Schema(description = "Student height in meters", example = "1.85")
+    @Schema(description = "User height in meters", example = "1.85")
     @NotNull
     @DecimalMin(value = "0.5", message = "Height must be between 0.5 and 3.0 meters")
     @DecimalMax(value = "3.0", message = "Height must be between 0.5 and 3.0 meters")

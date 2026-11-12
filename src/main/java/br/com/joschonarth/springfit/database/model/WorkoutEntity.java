@@ -41,8 +41,8 @@ public class WorkoutEntity {
     private LocalDateTime updatedAt;
 
     @ManyToOne()
-    @JoinColumn(name = "student_id")
-    private StudentEntity student;
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
     @Builder.Default
     @ManyToMany

@@ -2,9 +2,9 @@ package br.com.joschonarth.springfit.service;
 
 import br.com.joschonarth.springfit.config.RabbitMQConfiguration;
 import br.com.joschonarth.springfit.database.model.PhysicalAssessmentEntity;
-import br.com.joschonarth.springfit.database.model.StudentEntity;
+import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.repository.IPhysicalAssessmentRepository;
-import br.com.joschonarth.springfit.database.repository.IStudentRepository;
+import br.com.joschonarth.springfit.database.repository.IUserRepository;
 import br.com.joschonarth.springfit.dto.event.PhysicalAssessmentCreatedEvent;
 import br.com.joschonarth.springfit.dto.request.PhysicalAssessmentRequestDTO;
 import br.com.joschonarth.springfit.enums.BmiClassification;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 class PhysicalAssessmentServiceTest {
 
     @Mock
-    private IStudentRepository studentRepository;
+    private IUserRepository userRepository;
 
     @Mock
     private IPhysicalAssessmentRepository physicalAssessmentRepository;
@@ -51,11 +51,11 @@ class PhysicalAssessmentServiceTest {
     @InjectMocks
     private PhysicalAssessmentService physicalAssessmentService;
 
-    private StudentEntity student;
+    private UserEntity user;
 
     @BeforeEach
     void setUp() {
-        student = StudentEntity.builder()
+        user = UserEntity.builder()
                 .id(UUID.randomUUID())
                 .name("John Doe")
                 .build();
@@ -63,7 +63,7 @@ class PhysicalAssessmentServiceTest {
 
     private PhysicalAssessmentRequestDTO requestOf(String weight, String height, String bodyFat) {
         return new PhysicalAssessmentRequestDTO(
-                student.getId(),
+                user.getId(),
                 new BigDecimal(weight),
                 new BigDecimal(height),
                 new BigDecimal(bodyFat));
@@ -86,7 +86,7 @@ class PhysicalAssessmentServiceTest {
         @Test
         @DisplayName("should persist the assessment with BMI rounded HALF_UP to 2 decimals")
         void shouldPersistWithCalculatedBmi() throws NotFoundException {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             stubSaveAssigningGeneratedFields(UUID.randomUUID(), LocalDateTime.now());
 
             physicalAssessmentService.createPhysicalAssessment(requestOf("70", "1.75", "15.5"));
@@ -100,7 +100,7 @@ class PhysicalAssessmentServiceTest {
             assertThat(saved.getWeight()).isEqualByComparingTo("70");
             assertThat(saved.getHeight()).isEqualByComparingTo("1.75");
             assertThat(saved.getBodyFatPercentage()).isEqualByComparingTo("15.5");
-            assertThat(saved.getStudent()).isSameAs(student);
+            assertThat(saved.getUser()).isSameAs(user);
         }
 
         @ParameterizedTest(name = "BMI {0} should be classified as {1}")
@@ -114,7 +114,7 @@ class PhysicalAssessmentServiceTest {
         })
         @DisplayName("should classify BMI correctly around each threshold")
         void shouldClassifyBmiAtBoundaries(String bmi, BmiClassification expected) throws NotFoundException {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             stubSaveAssigningGeneratedFields(UUID.randomUUID(), LocalDateTime.now());
 
             physicalAssessmentService.createPhysicalAssessment(requestOf(bmi, "1.00", "20"));
@@ -131,7 +131,7 @@ class PhysicalAssessmentServiceTest {
             UUID assessmentId = UUID.randomUUID();
             LocalDateTime createdAt = LocalDateTime.of(2026, 10, 19, 12, 0);
 
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             stubSaveAssigningGeneratedFields(assessmentId, createdAt);
 
             physicalAssessmentService.createPhysicalAssessment(requestOf("70", "1.75", "15.5"));
@@ -145,7 +145,7 @@ class PhysicalAssessmentServiceTest {
 
             assertThat(captor.getValue()).isEqualTo(new PhysicalAssessmentCreatedEvent(
                     assessmentId,
-                    student.getId(),
+                    user.getId(),
                     "John Doe",
                     new BigDecimal("22.86"),
                     "NORMAL",
@@ -153,13 +153,13 @@ class PhysicalAssessmentServiceTest {
         }
 
         @Test
-        @DisplayName("should throw NotFoundException and neither persist nor publish when the student does not exist")
-        void shouldThrowWhenStudentNotFound() {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.empty());
+        @DisplayName("should throw NotFoundException and neither persist nor publish when the user does not exist")
+        void shouldThrowWhenUserNotFound() {
+            when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> physicalAssessmentService.createPhysicalAssessment(requestOf("70", "1.75", "15")))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessage("Student not found");
+                    .hasMessage("User not found");
 
             verify(physicalAssessmentRepository, never()).save(any());
             verifyNoInteractions(rabbitTemplate);
@@ -168,7 +168,7 @@ class PhysicalAssessmentServiceTest {
         @Test
         @DisplayName("should not publish an event when persisting fails")
         void shouldNotPublishWhenSaveFails() {
-            when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             when(physicalAssessmentRepository.save(any(PhysicalAssessmentEntity.class)))
                     .thenThrow(new IllegalStateException("db down"));
 

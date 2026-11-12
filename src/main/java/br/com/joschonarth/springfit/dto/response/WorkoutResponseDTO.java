@@ -29,8 +29,8 @@ public class WorkoutResponseDTO {
     @Schema(description = "Workout description", example = "Focus on compound movements")
     private String description;
 
-    @Schema(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
-    private UUID studentId;
+    @Schema(description = "User ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID userId;
 
     @Schema(description = "Creation date")
     private LocalDateTime createdAt;

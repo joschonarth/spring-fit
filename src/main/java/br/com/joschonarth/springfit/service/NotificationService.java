@@ -17,14 +17,14 @@ public class NotificationService {
 
     private final INotificationRepository notificationRepository;
 
-    public List<NotificationResponseDTO> getStudentNotifications(UUID studentId) {
-        return notificationRepository.findAllByStudentIdOrderByCreatedAtDesc(studentId).stream()
+    public List<NotificationResponseDTO> getUserNotifications(UUID userId) {
+        return notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(n -> new NotificationResponseDTO(n.getId(), n.getMessage(), n.isRead(), n.getCreatedAt()))
                 .toList();
     }
 
-    public void markAsRead(UUID studentId, UUID notificationId) throws NotFoundException {
-        NotificationEntity notification = notificationRepository.findByIdAndStudentId(notificationId, studentId)
+    public void markAsRead(UUID userId, UUID notificationId) throws NotFoundException {
+        NotificationEntity notification = notificationRepository.findByIdAndUserId(notificationId, userId)
                 .orElseThrow(() -> new NotFoundException("Notification not found"));
 
         notification.setRead(true);
@@ -32,8 +32,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markAllAsRead(UUID studentId) {
-        List<NotificationEntity> notifications = notificationRepository.findAllByStudentIdAndReadFalse(studentId);
+    public void markAllAsRead(UUID userId) {
+        List<NotificationEntity> notifications = notificationRepository.findAllByUserIdAndReadFalse(userId);
 
         notifications.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(notifications);

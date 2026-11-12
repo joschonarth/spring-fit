@@ -16,9 +16,9 @@ public class OpenApiConfiguration {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Spring Boot Essentials API")
+                        .title("SpringFit API")
                         .version("1.0.0")
-                        .description("API for managing students, workouts, exercises and physical assessments")
+                        .description("API for managing user, workouts, exercises and physical assessments")
                         .contact(new Contact()
                                 .name("joschonarth")
                                 .url("https://github.com/joschonarth")))

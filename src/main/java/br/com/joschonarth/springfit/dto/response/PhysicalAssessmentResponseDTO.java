@@ -21,13 +21,13 @@ public class PhysicalAssessmentResponseDTO {
     @Schema(description = "Assessment ID", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;
 
-    @Schema(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
-    private UUID studentId;
+    @Schema(description = "User ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID userId;
 
-    @Schema(description = "Student weight in kg", example = "85.5")
+    @Schema(description = "User weight in kg", example = "85.5")
     private BigDecimal weight;
 
-    @Schema(description = "Student height in meters", example = "1.85")
+    @Schema(description = "User height in meters", example = "1.85")
     private BigDecimal height;
 
     @Schema(description = "Body fat percentage", example = "18.5")

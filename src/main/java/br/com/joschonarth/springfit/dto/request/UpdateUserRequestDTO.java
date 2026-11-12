@@ -12,15 +12,15 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Request body for updating a student")
-public class UpdateStudentRequestDTO {
+@Schema(description = "Request body for updating a user")
+public class UpdateUserRequestDTO {
 
-    @Schema(description = "Student full name", example = "John Doe")
+    @Schema(description = "User full name", example = "John Doe")
     private String name;
 
-    @Schema(description = "Student phone number", example = "+55 11 99999-9999")
+    @Schema(description = "User phone number", example = "+55 11 99999-9999")
     private String phone;
 
-    @Schema(description = "Student birth date", example = "2000-01-15")
+    @Schema(description = "User birth date", example = "2000-01-15")
     private LocalDate birthDate;
 }

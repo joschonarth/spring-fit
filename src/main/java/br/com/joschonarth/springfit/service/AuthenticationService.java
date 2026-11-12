@@ -3,10 +3,10 @@ package br.com.joschonarth.springfit.service;
 import br.com.joschonarth.springfit.config.TokenProvider;
 import br.com.joschonarth.springfit.database.model.RefreshTokenEntity;
 import br.com.joschonarth.springfit.database.model.RolesEntity;
-import br.com.joschonarth.springfit.database.model.StudentEntity;
+import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.repository.IRefreshTokenRepository;
 import br.com.joschonarth.springfit.database.repository.IRolesRepository;
-import br.com.joschonarth.springfit.database.repository.IStudentRepository;
+import br.com.joschonarth.springfit.database.repository.IUserRepository;
 import br.com.joschonarth.springfit.dto.request.LoginRequestDTO;
 import br.com.joschonarth.springfit.dto.request.RegisterRequestDTO;
 import br.com.joschonarth.springfit.dto.response.RefreshTokenRequestDTO;
@@ -37,7 +37,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final IStudentRepository studentRepository;
+    private final IUserRepository userRepository;
     private final IRolesRepository rolesRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -53,11 +53,11 @@ public class AuthenticationService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public void register(RegisterRequestDTO dto) throws BadRequestException {
-        StudentEntity student = studentRepository.findByEmail(dto.getEmail())
+        UserEntity user = userRepository.findByEmail(dto.getEmail())
                 .orElse(null);
 
-        if (student != null) {
-            throw new BadRequestException("Student already registered with this email");
+        if (user != null) {
+            throw new BadRequestException("User already registered with this email");
         }
 
         RolesEntity role = rolesRepository.findByName(RoleTypeEnum.ROLE_STUDENT.name())
@@ -66,7 +66,7 @@ public class AuthenticationService {
                         .build()
                 ));
 
-        studentRepository.save(StudentEntity.builder()
+        userRepository.save(UserEntity.builder()
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .birthDate(dto.getBirthDate())
@@ -79,10 +79,10 @@ public class AuthenticationService {
     public TokenResponseDTO login(LoginRequestDTO dto) throws Exception {
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword()));
-            StudentEntity student = (StudentEntity) authentication.getPrincipal();
+            UserEntity user = (UserEntity) authentication.getPrincipal();
 
             String token = tokenProvider.generateToken(authentication);
-            String refreshToken = createRefreshToken(student);
+            String refreshToken = createRefreshToken(user);
 
             return new TokenResponseDTO(token, refreshToken, expirationTime);
         } catch (BadCredentialsException e) {
@@ -95,10 +95,10 @@ public class AuthenticationService {
         RefreshTokenEntity stored = refreshTokenRepository.findByTokenHash(hash(dto.getRefreshToken()))
                 .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
 
-        StudentEntity student = stored.getStudent();
+        UserEntity user = stored.getUser();
 
         if (stored.isRevoked()) {
-            refreshTokenRepository.revokeAllByStudentId(student.getId());
+            refreshTokenRepository.revokeAllByUserId(user.getId());
             throw new UnauthorizedException("Invalid refresh token");
         }
 
@@ -109,8 +109,8 @@ public class AuthenticationService {
         stored.setRevoked(true);
 
         return new TokenResponseDTO(
-                tokenProvider.generateToken(student.getUsername()),
-                createRefreshToken(student),
+                tokenProvider.generateToken(user.getUsername()),
+                createRefreshToken(user),
                 expirationTime
         );
     }
@@ -121,14 +121,14 @@ public class AuthenticationService {
                 .ifPresent(t -> t.setRevoked(true));
     }
 
-    private String createRefreshToken(StudentEntity student) {
+    private String createRefreshToken(UserEntity user) {
         byte[] bytes = new byte[32];
         SECURE_RANDOM.nextBytes(bytes);
         String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
 
         refreshTokenRepository.save(RefreshTokenEntity.builder()
                 .tokenHash(hash(raw))
-                .student(student)
+                .user(user)
                 .expiresAt(Instant.now().plusMillis(refreshExpirationTime))
                 .build());
 

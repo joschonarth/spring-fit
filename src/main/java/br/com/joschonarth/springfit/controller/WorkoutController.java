@@ -36,9 +36,9 @@ public class WorkoutController {
             @ApiResponse(responseCode = "201", description = "Workout created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid data or workout already exists"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "Student or exercise not found")
+            @ApiResponse(responseCode = "404", description = "User or exercise not found")
     })
-    @PreAuthorize("#workoutRequestDTO.studentId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#workoutRequestDTO.userId == authentication.principal.id or hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void createWorkout(@Valid @RequestBody WorkoutRequestDTO workoutRequestDTO) throws NotFoundException, BadRequestException {
@@ -60,7 +60,7 @@ public class WorkoutController {
         return workoutService.getWorkoutById(workoutId);
     }
 
-    @Operation(summary = "List all workouts from authenticated student")
+    @Operation(summary = "List all workouts from authenticated user")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Workouts retrieved successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")

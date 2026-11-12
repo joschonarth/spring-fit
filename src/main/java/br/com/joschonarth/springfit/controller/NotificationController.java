@@ -13,36 +13,36 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "Notification", description = "Endpoints for student notifications")
+@Tag(name = "Notification", description = "Endpoints for user notifications")
 @RestController
-@RequestMapping("v1/student/{studentId}/notifications")
+@RequestMapping("v1/user/{userId}/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @Operation(summary = "List notifications for a student")
-    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    @Operation(summary = "List notifications for a user")
+    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
     @GetMapping
-    public List<NotificationResponseDTO> getStudentNotifications(@PathVariable UUID studentId) {
-        return notificationService.getStudentNotifications(studentId);
+    public List<NotificationResponseDTO> getUserNotifications(@PathVariable UUID userId) {
+        return notificationService.getUserNotifications(userId);
     }
 
     @Operation(summary = "Mark a notification as read")
-    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
     @PatchMapping("{notificationId}/read")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markAsRead(
-            @PathVariable UUID studentId,
+            @PathVariable UUID userId,
             @PathVariable UUID notificationId) throws NotFoundException {
-        notificationService.markAsRead(studentId, notificationId);
+        notificationService.markAsRead(userId, notificationId);
     }
 
     @Operation(summary = "Mark all notifications as read")
-    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
     @PatchMapping("read-all")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void markAllAsRead(@PathVariable UUID studentId) {
-        notificationService.markAllAsRead(studentId);
+    public void markAllAsRead(@PathVariable UUID userId) {
+        notificationService.markAllAsRead(userId);
     }
 }

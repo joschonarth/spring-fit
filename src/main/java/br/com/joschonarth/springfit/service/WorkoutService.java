@@ -1,10 +1,10 @@
 package br.com.joschonarth.springfit.service;
 
 import br.com.joschonarth.springfit.database.model.ExerciseEntity;
-import br.com.joschonarth.springfit.database.model.StudentEntity;
+import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.model.WorkoutEntity;
 import br.com.joschonarth.springfit.database.repository.IExerciseRepository;
-import br.com.joschonarth.springfit.database.repository.IStudentRepository;
+import br.com.joschonarth.springfit.database.repository.IUserRepository;
 import br.com.joschonarth.springfit.database.repository.IWorkoutRepository;
 import br.com.joschonarth.springfit.dto.request.UpdateWorkoutRequestDTO;
 import br.com.joschonarth.springfit.dto.request.WorkoutExercisesRequestDTO;
@@ -26,38 +26,38 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WorkoutService {
 
-    private final IStudentRepository studentRepository;
+    private final IUserRepository userRepository;
     private final IExerciseRepository exerciseRepository;
     private final IWorkoutRepository workoutRepository;
 
     public void createWorkout(WorkoutRequestDTO workoutRequestDTO) throws NotFoundException, BadRequestException {
-        StudentEntity authenticatedStudent = Objects.requireNonNull(
-                (StudentEntity) Objects.requireNonNull(
+        UserEntity authenticatedUser = Objects.requireNonNull(
+                (UserEntity) Objects.requireNonNull(
                         SecurityContextHolder.getContext().getAuthentication(),
                         "Authentication must not be null"
                 ).getPrincipal(),
-                "Authenticated student must not be null"
+                "Authenticated user must not be null"
         );
 
-        boolean isAdmin = authenticatedStudent.getAuthorities().stream()
+        boolean isAdmin = authenticatedUser.getAuthorities().stream()
                 .anyMatch(role -> Objects.equals(role.getAuthority(), "ROLE_ADMIN"));
 
-        UUID targetStudentId = workoutRequestDTO.getStudentId();
+        UUID targetUserId = workoutRequestDTO.getUserId();
 
-        if (!isAdmin && !authenticatedStudent.getId().equals(targetStudentId)) {
-            throw new BadRequestException("Students can only create workouts for themselves");
+        if (!isAdmin && !authenticatedUser.getId().equals(targetUserId)) {
+            throw new BadRequestException("Users can only create workouts for themselves");
         }
 
         Set<ExerciseEntity> exercises = new HashSet<>();
 
-        StudentEntity student = studentRepository.findById(workoutRequestDTO.getStudentId())
-                .orElseThrow(() -> new NotFoundException("Student not found"));
+        UserEntity user = userRepository.findById(workoutRequestDTO.getUserId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        WorkoutEntity workout = workoutRepository.findByNameAndStudentId(workoutRequestDTO.getName(), workoutRequestDTO.getStudentId())
+        WorkoutEntity workout = workoutRepository.findByNameAndUserId(workoutRequestDTO.getName(), workoutRequestDTO.getUserId())
                 .orElse(null);
 
         if (workout != null) {
-            throw new BadRequestException("Already exists a workout with this name for this student");
+            throw new BadRequestException("Already exists a workout with this name for this user");
         }
 
         for (UUID exerciseId : workoutRequestDTO.getExerciseId()) {
@@ -71,7 +71,7 @@ public class WorkoutService {
                 .name(workoutRequestDTO.getName())
                 .objective(workoutRequestDTO.getObjective())
                 .description(workoutRequestDTO.getDescription())
-                .student(student)
+                .user(user)
                 .exercises(exercises)
                 .build();
 
@@ -83,25 +83,25 @@ public class WorkoutService {
     }
 
     public List<WorkoutResponseDTO> getAllWorkouts() {
-        StudentEntity authenticatedStudent = Objects.requireNonNull(
-                (StudentEntity) Objects.requireNonNull(
+        UserEntity authenticatedUser = Objects.requireNonNull(
+                (UserEntity) Objects.requireNonNull(
                         SecurityContextHolder.getContext().getAuthentication(),
                         "Authentication must not be null"
                 ).getPrincipal(),
-                "Authenticated student must not be null"
+                "Authenticated user must not be null"
         );
-        return workoutRepository.findAllByStudentId(authenticatedStudent.getId())
+        return workoutRepository.findAllByUserId(authenticatedUser.getId())
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<WorkoutResponseDTO> getWorkoutsByStudentId(UUID studentId) throws NotFoundException {
-        studentRepository.findById(studentId)
-                .orElseThrow(() -> new NotFoundException("Student not found"));
+    public List<WorkoutResponseDTO> getWorkoutsByUserId(UUID userId) throws NotFoundException {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        return workoutRepository.findAllByStudentId(studentId).stream()
+        return workoutRepository.findAllByUserId(userId).stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
@@ -113,10 +113,10 @@ public class WorkoutService {
 
         if (dto.getName() != null && !dto.getName().equals(workout.getName())) {
             boolean exists = workoutRepository
-                    .findByNameAndStudentId(dto.getName(), workout.getStudent().getId())
+                    .findByNameAndUserId(dto.getName(), workout.getUser().getId())
                     .isPresent();
             if (exists) {
-                throw new BadRequestException("Already exists a workout with this name for this student");
+                throw new BadRequestException("Already exists a workout with this name for this user");
             }
             workout.setName(dto.getName());
         }
@@ -168,25 +168,25 @@ public class WorkoutService {
         return toResponseDTO(workoutRepository.save(workout));
     }
 
-    private StudentEntity getAuthenticatedStudent() {
-        return (StudentEntity) Objects.requireNonNull(
+    private UserEntity getAuthenticatedUser() {
+        return (UserEntity) Objects.requireNonNull(
                 SecurityContextHolder.getContext().getAuthentication(),
                 "Authentication must not be null"
         ).getPrincipal();
     }
 
-    private boolean isAdmin(StudentEntity student) {
-        return student.getAuthorities().stream()
+    private boolean isAdmin(UserEntity user) {
+        return user.getAuthorities().stream()
                 .anyMatch(r -> RoleTypeEnum.ROLE_ADMIN.name().equals(r.getAuthority()));
     }
 
     private WorkoutEntity getAccessibleWorkout(UUID workoutId) throws NotFoundException {
-        StudentEntity auth = getAuthenticatedStudent();
+        UserEntity auth = getAuthenticatedUser();
 
         WorkoutEntity workout = workoutRepository.findById(workoutId)
                 .orElseThrow(() -> new NotFoundException("Workout not found"));
 
-        if (!isAdmin(auth) && !workout.getStudent().getId().equals(auth.getId())) {
+        if (!isAdmin(auth) && !workout.getUser().getId().equals(auth.getId())) {
             throw new NotFoundException("Workout not found");
         }
         return workout;
@@ -210,7 +210,7 @@ public class WorkoutService {
                 .name(workout.getName())
                 .objective(workout.getObjective())
                 .description(workout.getDescription())
-                .studentId(workout.getStudent().getId())
+                .userId(workout.getUser().getId())
                 .createdAt(workout.getCreatedAt())
                 .updatedAt(workout.getUpdatedAt())
                 .exercises(exercises)

@@ -20,8 +20,8 @@ public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "student_id", nullable = false)
-    private UUID studentId;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(nullable = false)
     private String message;

@@ -14,22 +14,22 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Student response data")
-public class StudentResponseDTO {
+@Schema(description = "User response data")
+public class UserResponseDTO {
 
-    @Schema(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    @Schema(description = "User ID", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;
 
-    @Schema(description = "Student full name", example = "John Doe")
+    @Schema(description = "User full name", example = "John Doe")
     private String name;
 
-    @Schema(description = "Student email", example = "john@email.com")
+    @Schema(description = "User email", example = "john@email.com")
     private String email;
 
-    @Schema(description = "Student birth date", example = "2000-01-15")
+    @Schema(description = "User birth date", example = "2000-01-15")
     private LocalDate birthDate;
 
-    @Schema(description = "Student phone number", example = "+55 11 99999-9999")
+    @Schema(description = "User phone number", example = "+55 11 99999-9999")
     private String phone;
 
     @Schema(description = "Registration date")

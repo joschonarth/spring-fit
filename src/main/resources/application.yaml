@@ -2,7 +2,7 @@ spring:
   application:
     name: spring-fit
 
-#  H2 In-Memory Database (uncomment to use H2 instead of MySQL)
+#  H2 In-Memory Database (uncomment to use H2 instead of PostgreSQL)
 #  datasource:
 #    url: jdbc:h2:mem:testdb
 #    driver-class-name: org.h2.Driver

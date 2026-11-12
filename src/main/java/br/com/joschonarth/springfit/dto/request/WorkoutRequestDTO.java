@@ -18,9 +18,9 @@ import java.util.UUID;
 @Schema(description = "Request body for creating a workout")
 public class WorkoutRequestDTO {
 
-    @Schema(description = "Student ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    @Schema(description = "User ID", example = "123e4567-e89b-12d3-a456-426614174000")
     @NotNull
-    private UUID studentId;
+    private UUID userId;
 
     @Schema(description = "Workout name", example = "Upper Body A")
     @NotBlank

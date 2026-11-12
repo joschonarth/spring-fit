@@ -2,9 +2,9 @@ package br.com.joschonarth.springfit.service;
 
 import br.com.joschonarth.springfit.config.RabbitMQConfiguration;
 import br.com.joschonarth.springfit.database.model.PhysicalAssessmentEntity;
-import br.com.joschonarth.springfit.database.model.StudentEntity;
+import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.repository.IPhysicalAssessmentRepository;
-import br.com.joschonarth.springfit.database.repository.IStudentRepository;
+import br.com.joschonarth.springfit.database.repository.IUserRepository;
 import br.com.joschonarth.springfit.dto.event.PhysicalAssessmentCreatedEvent;
 import br.com.joschonarth.springfit.dto.request.PhysicalAssessmentRequestDTO;
 import br.com.joschonarth.springfit.dto.projection.PhysicalAssessmentProjection;
@@ -24,13 +24,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PhysicalAssessmentService {
 
-    private final IStudentRepository studentRepository;
+    private final IUserRepository userRepository;
     private final IPhysicalAssessmentRepository physicalAssessmentRepository;
     private final RabbitTemplate rabbitTemplate;
 
     public void createPhysicalAssessment(PhysicalAssessmentRequestDTO dto) throws NotFoundException {
-        StudentEntity student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new NotFoundException("Student not found"));
+        UserEntity user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         BigDecimal bmi = dto.getWeight()
                 .divide(dto.getHeight().multiply(dto.getHeight()), 2, RoundingMode.HALF_UP);
@@ -43,7 +43,7 @@ public class PhysicalAssessmentService {
                 .bodyFatPercentage(dto.getBodyFatPercentage())
                 .bmi(bmi)
                 .bmiClassification(classification)
-                .student(student)
+                .user(user)
                 .build();
 
         PhysicalAssessmentEntity saved = physicalAssessmentRepository.save(physicalAssessment);
@@ -53,8 +53,8 @@ public class PhysicalAssessmentService {
                 RabbitMQConfiguration.ASSESSMENT_CREATED_ROUTING_KEY,
                 new PhysicalAssessmentCreatedEvent(
                         saved.getId(),
-                        student.getId(),
-                        student.getName(),
+                        user.getId(),
+                        user.getName(),
                         saved.getBmi(),
                         saved.getBmiClassification().name(),
                         saved.getCreatedAt()
