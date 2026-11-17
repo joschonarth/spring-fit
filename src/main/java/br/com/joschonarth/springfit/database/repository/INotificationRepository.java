@@ -14,4 +14,6 @@ public interface INotificationRepository extends JpaRepository<NotificationEntit
     Optional<NotificationEntity> findByIdAndUserId(UUID id, UUID userId);
 
     List<NotificationEntity> findAllByUserIdAndReadFalse(UUID userId);
+
+    void deleteAllByUserId(UUID userId);
 }
