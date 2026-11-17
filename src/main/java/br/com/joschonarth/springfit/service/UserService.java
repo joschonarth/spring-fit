@@ -3,9 +3,7 @@ package br.com.joschonarth.springfit.service;
 import br.com.joschonarth.springfit.database.model.PhysicalAssessmentEntity;
 import br.com.joschonarth.springfit.database.model.UserEntity;
 import br.com.joschonarth.springfit.database.model.WorkoutEntity;
-import br.com.joschonarth.springfit.database.repository.IPhysicalAssessmentRepository;
-import br.com.joschonarth.springfit.database.repository.IUserRepository;
-import br.com.joschonarth.springfit.database.repository.IWorkoutRepository;
+import br.com.joschonarth.springfit.database.repository.*;
 import br.com.joschonarth.springfit.dto.response.PhysicalAssessmentResponseDTO;
 import br.com.joschonarth.springfit.dto.response.UserResponseDTO;
 import br.com.joschonarth.springfit.dto.request.UpdateUserRequestDTO;
@@ -24,6 +22,8 @@ public class UserService {
     private final IPhysicalAssessmentRepository physicalAssessmentRepository;
     private final IWorkoutRepository workoutRepository;
     private final IUserRepository userRepository;
+    private final IRefreshTokenRepository refreshTokenRepository;
+    private final INotificationRepository notificationRepository;
 
     public PhysicalAssessmentResponseDTO getUserAssessment(UUID userId, UUID assessmentId) throws NotFoundException {
         userRepository.findById(userId)
@@ -55,6 +55,8 @@ public class UserService {
 
         workoutRepository.deleteAllById(workoutIds);
         physicalAssessmentRepository.deleteAllByUserId(userId);
+        refreshTokenRepository.deleteAllByUserId(userId);
+        notificationRepository.deleteAllByUserId(userId);
         userRepository.deleteById(userId);
     }
 
