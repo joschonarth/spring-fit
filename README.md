@@ -77,14 +77,15 @@ pipeline, and interactive documentation powered by **Swagger**.
 - [x] Logout endpoint (revokes the refresh token)
 - [x] Scheduled job that cleans up expired refresh tokens daily at 03:00
 - [x] Passwords hashed with BCrypt, with validation rules (minimum length, letter + digit, max 72 bytes)
-- [x] Role-based access control (`ADMIN` and `STUDENT`)
+- [x] Role-based access control (`ROLE_ADMIN` and `ROLE_STUDENT`)
 - [x] Ownership checks with `@PreAuthorize` (users can only access their own data)
 - [x] **Rate limiting** per client IP: stricter limit on `/v1/auth/**`, general limit on the rest of the API
 - [x] Standard `429 Too Many Requests` responses with `Retry-After`, and `X-Rate-Limit-Remaining` on successful calls
 
 ### 🏋️ Gym Management
 
-- [x] User registration, profile update, lookup and removal (cascades to workouts and assessments)
+- [x] User registration, profile update, lookup and removal (cascades to workouts, physical assessments, refresh
+  tokens and notifications)
 - [x] Personalized workouts per user: create, update, delete, and list
 - [x] Add and remove exercises from a workout (a workout must keep at least one exercise)
 - [x] Exercise management by muscle group, with default difficulty level
@@ -167,7 +168,7 @@ src/main/resources
 
 ```mermaid
 erDiagram
-    user {
+    users {
         uuid id PK
         string name
         string email
@@ -231,18 +232,18 @@ erDiagram
         boolean is_read
         datetime created_at
     }
-    user ||--o{ user_roles : "has"
+    users ||--o{ user_roles : "has"
     roles ||--o{ user_roles : "assigned to"
-    user ||--o{ refresh_token : "owns"
-    user ||--o{ physical_assessment : "has history of"
-    user ||--o{ workout : "has"
-    user ||--o{ notification : "receives"
+    users ||--o{ refresh_token : "owns"
+    users ||--o{ physical_assessment : "has history of"
+    users ||--o{ workout : "has"
     workout ||--o{ workout_exercise : "contains"
     exercise ||--o{ workout_exercise : "used in"
 ```
 
-> 💡 The schema above is the result of the Flyway migrations. Any change to an entity must be accompanied by a new
-> migration file (for example `V2__add_column.sql`); never edit an already applied migration.
+> 💡 The schema above is the result of the Flyway migrations. `notification.user_id` is not a foreign key, so
+> notifications are removed explicitly when their user is deleted. Any change to an entity must be accompanied by a
+> new migration file (for example `V4__add_column.sql`); never edit an already applied migration.
 
 ---
 
@@ -304,7 +305,7 @@ pending migrations automatically on the first start.
 | Service                | Port    | Notes                                         |
 |------------------------|---------|-----------------------------------------------|
 | API                    | `8080`  | Configurable with `APP_PORT`                  |
-| PostgreSQL                  | `5432`  | Data persisted in the `postgres_data` volume     |
+| PostgreSQL             | `5432`  | Data persisted in the `postgres_data` volume  |
 | RabbitMQ (AMQP)        | `5672`  | Data persisted in the `rabbitmq_data` volume  |
 | RabbitMQ Management UI | `15672` | Uses `RABBITMQ_USERNAME` / `RABBITMQ_PASSWORD` |
 
@@ -353,7 +354,7 @@ The API will be available at **[http://localhost:8080](http://localhost:8080)**.
 
 ### 🛫 Database Migrations (Flyway)
 
-Schema changes are managed by **Flyway**. The migration scripts live in `src/main/resources/db/migration` and follow the
+Schema changes are managed by **Flyway**. The migration scripts live in `src/main/resources/db/migration/postgresql` and follow the
 `V<version>__<description>.sql` naming convention.
 
 - On startup, Flyway applies every migration that has not been applied yet, in version order.
@@ -361,7 +362,8 @@ Schema changes are managed by **Flyway**. The migration scripts live in `src/mai
   match the database.
 - The current baseline is `V1__baseline_schema.sql`. Databases that already existed before Flyway was introduced are
   marked at `baseline-version: 1`, so the baseline is treated as applied and only later migrations run.
-- To change the schema, create a new file with the next version (for example `V2__add_goal_to_workout.sql`). Never
+- `V3__rename_student_to_user.sql` renames the former `student` tables and columns to `users` and `user_id`.
+- To change the schema, create a new file with the next version (for example `V4__add_goal_to_workout.sql`). Never
   modify a migration that has already been applied to any environment.
 
 ### 🗄️ Alternative Database (H2)
@@ -399,10 +401,10 @@ With H2 enabled, the console will be available at **[http://localhost:8080/h2-co
 
 On first startup (when the database is empty), `DataSeeder` creates default roles, users and exercises:
 
-| Role      | Email                 | Password   |
-|-----------|-----------------------|------------|
-| `ADMIN`   | `admin@example.com`   | `admin123` |
-| `STUDENT` | `johndoe@example.com` | `john123`  |
+| Role           | Email                 | Password   |
+|----------------|-----------------------|------------|
+| `ROLE_ADMIN`   | `admin@example.com`   | `admin123` |
+| `ROLE_STUDENT` | `johndoe@example.com` | `john123`  |
 
 It also creates 5 sample exercises (Bench Press, Pull Up, Squat, Shoulder Press and Bicep Curl).
 
